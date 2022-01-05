@@ -1,24 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createClient } from '@supabase/supabase-js';
 
+import { DatabaseService } from '../database/database.service';
 import { CreateReminderDto, UpdateReminderDto } from './dto';
 
 const REMINDERS_TABLE = 'reminders';
 
 @Injectable()
 export class RemindersService {
-  private db = null;
-
-  constructor(private readonly configService: ConfigService) {
-    this.db = createClient(
-      this.configService.get('SUPABASE_URL'),
-      this.configService.get('SUPABASE_KEY'),
-    );
-  }
+  constructor(private readonly databaseService: DatabaseService) {}
 
   async create(createReminderDto: CreateReminderDto) {
-    const { data, error } = await this.db
+    const { data, error } = await this.databaseService.client
       .from('reminders')
       .insert([createReminderDto]);
 
@@ -30,7 +22,9 @@ export class RemindersService {
   }
 
   async findAll() {
-    const { data, error } = await this.db.from(REMINDERS_TABLE).select();
+    const { data, error } = await this.databaseService.client
+      .from(REMINDERS_TABLE)
+      .select();
 
     if (error) {
       throw new Error(`Failed to fetch reminders: ${JSON.stringify(error)}`);
@@ -40,7 +34,7 @@ export class RemindersService {
   }
 
   async findOne(id: number) {
-    const { data, error } = await this.db
+    const { data, error } = await this.databaseService.client
       .from(REMINDERS_TABLE)
       .select()
       .match({ id });
@@ -55,7 +49,7 @@ export class RemindersService {
   }
 
   async update(id: number, updateReminderDto: UpdateReminderDto) {
-    const { data, error } = await this.db
+    const { data, error } = await this.databaseService.client
       .from(REMINDERS_TABLE)
       .update(updateReminderDto)
       .match({ id });
@@ -70,7 +64,7 @@ export class RemindersService {
   }
 
   async remove(id: number) {
-    const { data, error } = await this.db
+    const { data, error } = await this.databaseService.client
       .from(REMINDERS_TABLE)
       .delete()
       .match({ id });

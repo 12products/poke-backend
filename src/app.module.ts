@@ -7,6 +7,5 @@ import { AppController } from './app.controller';
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true }), RemindersModule],
   controllers: [AppController],
-  providers: [],
 })
 export class AppModule {}
