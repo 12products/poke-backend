@@ -1,26 +1,82 @@
 import { Injectable } from '@nestjs/common';
-import { CreateReminderDto } from './dto/create-reminder.dto';
-import { UpdateReminderDto } from './dto/update-reminder.dto';
+import { ConfigService } from '@nestjs/config';
+import { createClient } from '@supabase/supabase-js';
+
+import { CreateReminderDto, UpdateReminderDto } from './dto';
+
+const REMINDERS_TABLE = 'reminders';
 
 @Injectable()
 export class RemindersService {
-  create(createReminderDto: CreateReminderDto) {
-    return 'This action adds a new reminder';
+  private db = null;
+
+  constructor(private readonly configService: ConfigService) {
+    this.db = createClient(
+      this.configService.get('SUPABASE_URL'),
+      this.configService.get('SUPABASE_KEY'),
+    );
   }
 
-  findAll() {
-    return `This action returns all reminders`;
+  async create(createReminderDto: CreateReminderDto) {
+    const { data, error } = await this.db
+      .from('reminders')
+      .insert([createReminderDto]);
+
+    if (error) {
+      throw new Error(`Failed to create reminder: ${error}`);
+    }
+
+    return data;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} reminder`;
+  async findAll() {
+    const { data, error } = await this.db.from(REMINDERS_TABLE).select();
+
+    if (error) {
+      throw new Error(`Failed to fetch reminders: ${error}`);
+    }
+
+    return data;
   }
 
-  update(id: number, updateReminderDto: UpdateReminderDto) {
-    return `This action updates a #${id} reminder`;
+  async findOne(id: number) {
+    const { data, error } = await this.db
+      .from(REMINDERS_TABLE)
+      .select()
+      .match({ id })
+      .limit(1)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to fetch reminder by ID (${id}): ${error}`);
+    }
+
+    return data;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} reminder`;
+  async update(id: number, updateReminderDto: UpdateReminderDto) {
+    const { data, error } = await this.db
+      .from(REMINDERS_TABLE)
+      .update(updateReminderDto)
+      .match({ id });
+
+    if (error) {
+      throw new Error(`Failed to update reminder by ID (${id}): ${error}`);
+    }
+
+    return data;
+  }
+
+  async remove(id: number) {
+    const { data, error } = await this.db
+      .from(REMINDERS_TABLE)
+      .delete()
+      .match({ id });
+
+    if (error) {
+      throw new Error(`Failed to delete reminder by ID (${id}): ${error}`);
+    }
+
+    return data;
   }
 }
