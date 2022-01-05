@@ -23,7 +23,7 @@ export class RemindersService {
       .insert([createReminderDto]);
 
     if (error) {
-      throw new Error(`Failed to create reminder: ${error}`);
+      throw new Error(`Failed to create reminder: ${JSON.stringify(error)}`);
     }
 
     return data;
@@ -33,7 +33,7 @@ export class RemindersService {
     const { data, error } = await this.db.from(REMINDERS_TABLE).select();
 
     if (error) {
-      throw new Error(`Failed to fetch reminders: ${error}`);
+      throw new Error(`Failed to fetch reminders: ${JSON.stringify(error)}`);
     }
 
     return data;
@@ -43,15 +43,15 @@ export class RemindersService {
     const { data, error } = await this.db
       .from(REMINDERS_TABLE)
       .select()
-      .match({ id })
-      .limit(1)
-      .single();
+      .match({ id });
 
     if (error) {
-      throw new Error(`Failed to fetch reminder by ID (${id}): ${error}`);
+      throw new Error(
+        `Failed to fetch reminder by ID (${id}): ${JSON.stringify(error)}`,
+      );
     }
 
-    return data;
+    return data[0] || null;
   }
 
   async update(id: number, updateReminderDto: UpdateReminderDto) {
@@ -61,7 +61,9 @@ export class RemindersService {
       .match({ id });
 
     if (error) {
-      throw new Error(`Failed to update reminder by ID (${id}): ${error}`);
+      throw new Error(
+        `Failed to update reminder by ID (${id}): ${JSON.stringify(error)}`,
+      );
     }
 
     return data;
@@ -74,7 +76,9 @@ export class RemindersService {
       .match({ id });
 
     if (error) {
-      throw new Error(`Failed to delete reminder by ID (${id}): ${error}`);
+      throw new Error(
+        `Failed to delete reminder by ID (${id}): ${JSON.stringify(error)}`,
+      );
     }
 
     return data;
