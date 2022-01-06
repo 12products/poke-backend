@@ -3,7 +3,7 @@ export class Reminder {
   title: string;
   description: string;
   notificationDays: number[];
-  notificationTime: Date;
+  notificationTime: string;
   createdAt: Date;
   updatedAt: Date;
 }
