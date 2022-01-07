@@ -1,80 +1,37 @@
 import { Injectable } from '@nestjs/common';
 
+import { Reminder, Prisma } from '@prisma/client';
 import { DatabaseService } from '../database/database.service';
-import { CreateReminderDto, UpdateReminderDto } from './dto';
-
-const REMINDERS_TABLE = 'reminders';
 
 @Injectable()
 export class RemindersService {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly db: DatabaseService) {}
 
-  async create(createReminderDto: CreateReminderDto) {
-    const { data, error } = await this.databaseService.client
-      .from('reminders')
-      .insert([createReminderDto]);
-
-    if (error) {
-      throw new Error(`Failed to create reminder: ${JSON.stringify(error)}`);
-    }
-
-    return data;
+  async create(data: Prisma.ReminderCreateInput): Promise<Reminder> {
+    return this.db.reminder.create({ data });
   }
 
-  async findAll() {
-    const { data, error } = await this.databaseService.client
-      .from(REMINDERS_TABLE)
-      .select();
-
-    if (error) {
-      throw new Error(`Failed to fetch reminders: ${JSON.stringify(error)}`);
-    }
-
-    return data;
+  async findAll(): Promise<Reminder[]> {
+    return this.db.reminder.findMany();
   }
 
-  async findOne(id: number) {
-    const { data, error } = await this.databaseService.client
-      .from(REMINDERS_TABLE)
-      .select()
-      .match({ id });
-
-    if (error) {
-      throw new Error(
-        `Failed to fetch reminder by ID (${id}): ${JSON.stringify(error)}`,
-      );
-    }
-
-    return data[0] || null;
+  async findOne(
+    where: Prisma.ReminderWhereUniqueInput,
+  ): Promise<Reminder | null> {
+    return this.db.reminder.findUnique({ where });
   }
 
-  async update(id: number, updateReminderDto: UpdateReminderDto) {
-    const { data, error } = await this.databaseService.client
-      .from(REMINDERS_TABLE)
-      .update(updateReminderDto)
-      .match({ id });
-
-    if (error) {
-      throw new Error(
-        `Failed to update reminder by ID (${id}): ${JSON.stringify(error)}`,
-      );
-    }
-
-    return data;
+  async update({
+    where,
+    data,
+  }: {
+    where: Prisma.ReminderWhereUniqueInput;
+    data: Prisma.ReminderUpdateInput;
+  }): Promise<Reminder> {
+    return this.db.reminder.update({ where, data });
   }
 
-  async remove(id: number) {
-    const { data, error } = await this.databaseService.client
-      .from(REMINDERS_TABLE)
-      .delete()
-      .match({ id });
-
-    if (error) {
-      throw new Error(
-        `Failed to delete reminder by ID (${id}): ${JSON.stringify(error)}`,
-      );
-    }
-
-    return data;
+  async remove(where: Prisma.ReminderWhereUniqueInput): Promise<Reminder> {
+    return this.db.reminder.delete({ where });
   }
 }

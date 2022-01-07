@@ -1,15 +1,14 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { createClient } from '@supabase/supabase-js';
-
+import { INestApplication, Injectable, OnModuleInit } from '@nestjs/common';
+import { PrismaClient } from '@prisma/client';
 @Injectable()
-export class DatabaseService {
-  public client = null;
+export class DatabaseService extends PrismaClient implements OnModuleInit {
+  async onModuleInit() {
+    await this.$connect();
+  }
 
-  constructor(private readonly configService: ConfigService) {
-    this.client = createClient(
-      this.configService.get('SUPABASE_URL'),
-      this.configService.get('SUPABASE_KEY'),
-    );
+  async enableShutdownHooks(app: INestApplication) {
+    this.$on('beforeExit', async () => {
+      await app.close();
+    });
   }
 }
