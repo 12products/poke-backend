@@ -8,11 +8,22 @@ datasource db {
 }
 
 model Reminder {
-  id               Int      @id @default(autoincrement())
+  id               String   @id @default(uuid())
   title            String
   description      String?
   notificationTime DateTime @db.Timestamptz(6)
   notificationDays Int[]
+  user             User     @relation(fields: [userId], references: [id])
+  userId           String
   createdAt        DateTime @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model User {
+  id        String     @id @default(uuid())
+  name      String
+  phone     String
+  email     String
+  password  String
+  reminders Reminder[]
 }

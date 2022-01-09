@@ -22,7 +22,7 @@ export class RemindersController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.remindersService.findOne({ id: +id });
+    return this.remindersService.findOne({ id });
   }
 
   @Post()
@@ -33,13 +33,13 @@ export class RemindersController {
   @Patch(':id')
   update(@Param('id') id: string, @Body() data: Prisma.ReminderUpdateInput) {
     return this.remindersService.update({
-      where: { id: +id },
+      where: { id },
       data,
     });
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.remindersService.remove({ id: +id });
+    return this.remindersService.remove({ id });
   }
 }
