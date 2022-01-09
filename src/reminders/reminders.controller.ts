@@ -6,10 +6,10 @@ import {
   Patch,
   Param,
   Delete,
-} from '@nestjs/common';
+} from '@nestjs/common'
 
-import { RemindersService } from './reminders.service';
-import { Prisma } from '@prisma/client';
+import { RemindersService } from './reminders.service'
+import { Prisma } from '@prisma/client'
 
 @Controller('reminders')
 export class RemindersController {
@@ -17,17 +17,17 @@ export class RemindersController {
 
   @Get()
   findAll() {
-    return this.remindersService.findAll();
+    return this.remindersService.findAll()
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.remindersService.findOne({ id });
+    return this.remindersService.findOne({ id })
   }
 
   @Post()
   create(@Body() data: Prisma.ReminderCreateInput) {
-    return this.remindersService.create(data);
+    return this.remindersService.create(data)
   }
 
   @Patch(':id')
@@ -35,11 +35,11 @@ export class RemindersController {
     return this.remindersService.update({
       where: { id },
       data,
-    });
+    })
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.remindersService.remove({ id });
+    return this.remindersService.remove({ id })
   }
 }

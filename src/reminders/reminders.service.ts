@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common'
 
-import { Reminder, Prisma } from '@prisma/client';
-import { DatabaseService } from '../database/database.service';
+import { Reminder, Prisma } from '@prisma/client'
+import { DatabaseService } from '../database/database.service'
 
 @Injectable()
 export class RemindersService {
@@ -15,30 +15,30 @@ export class RemindersService {
           connect: { id: data.user as string },
         },
       },
-    });
+    })
   }
 
   async findAll(): Promise<Reminder[]> {
-    return this.db.reminder.findMany();
+    return this.db.reminder.findMany()
   }
 
   async findOne(
-    where: Prisma.ReminderWhereUniqueInput,
+    where: Prisma.ReminderWhereUniqueInput
   ): Promise<Reminder | null> {
-    return this.db.reminder.findUnique({ where });
+    return this.db.reminder.findUnique({ where })
   }
 
   async update({
     where,
     data,
   }: {
-    where: Prisma.ReminderWhereUniqueInput;
-    data: Prisma.ReminderUpdateInput;
+    where: Prisma.ReminderWhereUniqueInput
+    data: Prisma.ReminderUpdateInput
   }): Promise<Reminder> {
-    return this.db.reminder.update({ where, data });
+    return this.db.reminder.update({ where, data })
   }
 
   async remove(where: Prisma.ReminderWhereUniqueInput): Promise<Reminder> {
-    return this.db.reminder.delete({ where });
+    return this.db.reminder.delete({ where })
   }
 }
