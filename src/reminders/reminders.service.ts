@@ -8,7 +8,14 @@ export class RemindersService {
   constructor(private readonly db: DatabaseService) {}
 
   async create(data: Prisma.ReminderCreateInput): Promise<Reminder> {
-    return this.db.reminder.create({ data });
+    return this.db.reminder.create({
+      data: {
+        ...data,
+        user: {
+          connect: { id: data.user as string },
+        },
+      },
+    });
   }
 
   async findAll(): Promise<Reminder[]> {
