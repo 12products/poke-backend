@@ -18,6 +18,7 @@ export class RemindersService {
     return this.db.reminder.create({
       data: {
         ...data,
+        notificationTime: new Date(data.notificationTime),
         user: {
           connect: { id: data.user as string },
         },
@@ -49,7 +50,7 @@ export class RemindersService {
     return this.db.reminder.delete({ where })
   }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_MINUTE)
   async sendReminders() {
     const now = new Date()
     const notificationHour = `${now.getUTCHours()}`.padStart(2, '0')
@@ -57,7 +58,9 @@ export class RemindersService {
 
     const remindersToSend = await this.db.reminder.findMany({
       where: {
-        notificationTime: `${notificationHour}:${notificationMinutes}`,
+        notificationTime: new Date(
+          `01/01/2001 ${notificationHour}:${notificationMinutes} UTC`
+        ),
         notificationDays: {
           has: now.getDay(),
         },
