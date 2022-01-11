@@ -52,10 +52,12 @@ export class RemindersService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async sendReminders() {
     const now = new Date()
+    const notificationHour = `${now.getUTCHours()}`.padStart(2, '0')
+    const notificationMinutes = `${now.getUTCMinutes()}`.padStart(2, '0')
 
     const remindersToSend = await this.db.reminder.findMany({
       where: {
-        notificationTime: now.getMinutes(),
+        notificationTime: `${notificationHour}:${notificationMinutes}`,
         notificationDays: {
           has: now.getDay(),
         },
