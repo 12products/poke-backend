@@ -9,12 +9,13 @@ datasource db {
 
 model Reminder {
   id               String   @id @default(uuid())
-  title            String
-  description      String?
-  notificationTime DateTime @db.Timestamptz(6)
+  text             String
+  notificationTime Int
+  // 0 indexed; 0 = Sunday, 6 = Saturday, etc.
   notificationDays Int[]
   user             User     @relation(fields: [userId], references: [id])
   userId           String
+  message          Message?
   createdAt        DateTime @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime @default(now()) @db.Timestamptz(6)
 }
@@ -26,4 +27,12 @@ model User {
   email     String
   password  String
   reminders Reminder[]
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  reminder   Reminder @relation(fields: [reminderId], references: [id])
+  reminderId String   @unique
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @db.Timestamptz(6)
 }

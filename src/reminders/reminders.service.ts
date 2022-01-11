@@ -1,11 +1,18 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
+import { Cron, CronExpression } from '@nestjs/schedule'
 
 import { Reminder, Prisma } from '@prisma/client'
+import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
 
 @Injectable()
 export class RemindersService {
-  constructor(private readonly db: DatabaseService) {}
+  private readonly logger = new Logger(RemindersService.name)
+
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly messageService: MessageService
+  ) {}
 
   async create(data: Prisma.ReminderCreateInput): Promise<Reminder> {
     return this.db.reminder.create({
@@ -40,5 +47,24 @@ export class RemindersService {
 
   async remove(where: Prisma.ReminderWhereUniqueInput): Promise<Reminder> {
     return this.db.reminder.delete({ where })
+  }
+
+  @Cron(CronExpression.EVERY_5_MINUTES)
+  async sendReminders() {
+    const now = new Date()
+
+    const remindersToSend = await this.db.reminder.findMany({
+      where: {
+        notificationTime: now.getMinutes(),
+        notificationDays: {
+          has: now.getDay(),
+        },
+      },
+    })
+
+    remindersToSend.forEach((reminder) => {
+      this.logger.log(`Sending reminder to ${reminder.id}`)
+      this.messageService.create(reminder.id)
+    })
   }
 }
