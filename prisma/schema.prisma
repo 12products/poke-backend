@@ -10,7 +10,8 @@ datasource db {
 model Reminder {
   id               String   @id @default(uuid())
   text             String
-  notificationTime Int
+  // time (ie 01:02) in UTC
+  notificationTime DateTime @db.Time(0)
   // 0 indexed; 0 = Sunday, 6 = Saturday, etc.
   notificationDays Int[]
   user             User     @relation(fields: [userId], references: [id])
