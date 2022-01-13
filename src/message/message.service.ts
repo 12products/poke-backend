@@ -11,6 +11,7 @@ export class MessageService {
   private readonly logger = new Logger(MessageService.name)
   private twilioClient: twilio.Twilio
   private twilioPhone: string
+  private tempPhone: string
 
   constructor(
     private readonly db: DatabaseService,
@@ -19,6 +20,7 @@ export class MessageService {
     const accountID = this.configService.get<string>('TWILIO_ACCOUNT_ID')
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN')
     this.twilioPhone = this.configService.get<string>('TWILIO_PHONE')
+    this.tempPhone = this.configService.get<string>('TEMP_PHONE')
     this.twilioClient = twilio(accountID, authToken)
   }
 
@@ -44,9 +46,17 @@ export class MessageService {
     const response = await this.twilioClient.messages.create({
       body: reminder.text,
       from: this.twilioPhone,
-      to: '+17786978925',
+      to: this.tempPhone,
     })
     console.log({ response })
+  }
+
+  async receiveMessage(req) {
+    const userResponse = req.body.Body
+    console.log({ req, userResponse })
+    const twiml = new twilio.twiml.MessagingResponse()
+    twiml.message('Happy you responded!')
+    return twiml.toString()
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
