@@ -6,6 +6,7 @@ import { RemindersModule } from './reminders/reminders.module'
 import { UsersModule } from './users/users.module'
 import { AppController } from './app.controller'
 import { MessageModule } from './message/message.module'
+import { TwilioModule } from './twilio/twilio.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { MessageModule } from './message/message.module'
     RemindersModule,
     UsersModule,
     MessageModule,
+    TwilioModule,
   ],
   controllers: [AppController],
 })

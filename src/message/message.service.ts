@@ -1,28 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { ConfigService } from '@nestjs/config'
-import * as twilio from 'twilio'
 
 import { Message } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
+import { TwilioService } from 'src/twilio/twilio.service'
 
 @Injectable()
 export class MessageService {
   private readonly logger = new Logger(MessageService.name)
-  private twilioClient: twilio.Twilio
-  private twilioPhone: string
-  private tempPhone: string
 
   constructor(
     private readonly db: DatabaseService,
-    private configService: ConfigService
-  ) {
-    const accountID = this.configService.get<string>('TWILIO_ACCOUNT_ID')
-    const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN')
-    this.twilioPhone = this.configService.get<string>('TWILIO_PHONE')
-    this.tempPhone = this.configService.get<string>('TEMP_PHONE')
-    this.twilioClient = twilio(accountID, authToken)
-  }
+    private twilio: TwilioService
+  ) {}
 
   async create(reminderId: string): Promise<Message> {
     const message = await this.db.message.create({
@@ -41,22 +32,22 @@ export class MessageService {
   async sendMessage(reminderId: string) {
     const reminder = await this.db.reminder.findUnique({
       where: { id: reminderId },
+      include: {
+        user: true,
+      },
     })
 
-    const response = await this.twilioClient.messages.create({
-      body: reminder.text,
-      from: this.twilioPhone,
-      to: this.tempPhone,
-    })
+    const response = await this.twilio.sendMessage(
+      reminder.text,
+      reminder.user.phone
+    )
     console.log({ response })
   }
 
   async receiveMessage(req) {
     const userResponse = req.body.Body
-    console.log({ req, userResponse })
-    const twiml = new twilio.twiml.MessagingResponse()
-    twiml.message('Happy you responded!')
-    return twiml.toString()
+    const message = await this.twilio.respondMessage(userResponse)
+    return message
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
