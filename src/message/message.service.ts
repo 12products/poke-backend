@@ -1,6 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
-import { ConfigService } from '@nestjs/config'
 
 import { Message, Prisma } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
@@ -43,6 +42,10 @@ export class MessageService {
     return this.db.message.delete({ where })
   }
 
+  async findAll(): Promise<Message[]> {
+    return this.db.message.findMany()
+  }
+
   async sendMessage(reminderId: string) {
     const reminder = await this.db.reminder.findUnique({
       where: { id: reminderId },
@@ -55,11 +58,17 @@ export class MessageService {
       reminder.text,
       reminder.user.phone
     )
+
+    await this.db.reminder.update({
+      where: { id: reminderId },
+      data: { updatedAt: new Date() },
+    })
+    return response
   }
 
   async receiveMessage(req) {
     let pokeResponse = `We'll give you another poke in an hour!`
-    const userResponse = req.body.Body
+    const userResponse = req.body.Body.trim()
     const user = await this.db.user.findUnique({
       where: { phone: req.body.From },
       include: {
@@ -78,7 +87,7 @@ export class MessageService {
     return await this.twilio.respondMessage(pokeResponse)
   }
 
-  // @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async resendMessage() {
     this.logger.log('Sending a poke to user')
     // determines the time 1 hour ago from now

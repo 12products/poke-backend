@@ -68,7 +68,7 @@ export class RemindersService {
     })
 
     remindersToSend.forEach((reminder) => {
-      this.logger.log(`Sending reminder to ${reminder.id}`)
+      this.logger.log(`Sending reminder to ${reminder.emoji} ${reminder.id}`)
       this.messageService.create(reminder.id)
     })
   }
