@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
-import { Reminder, Prisma } from '@prisma/client'
+import { Reminder, Prisma, prisma } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
 
@@ -15,9 +15,30 @@ export class RemindersService {
   ) {}
 
   async create(data: Prisma.ReminderCreateInput): Promise<Reminder> {
+    const emojis = [
+      '🦄',
+      '🥰',
+      '🍔',
+      '🙉',
+      '🍎',
+      '😇',
+      '🦊',
+      '🍉',
+      '🤩',
+      '🦁',
+      '😜',
+    ]
+    const totalReminders = await this.db.reminder.count({
+      where: {
+        user: { id: data.user as string },
+      },
+    })
+    //get number of reminders that users has (prisma count)
+    // mod length of array of emojis
     return this.db.reminder.create({
       data: {
         ...data,
+        emoji: emojis[totalReminders],
         notificationTime: new Date(data.notificationTime),
         user: {
           connect: { id: data.user as string },
