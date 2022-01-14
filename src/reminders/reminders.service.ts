@@ -4,6 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 import { Reminder, Prisma } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
+import { emojis } from '../constants'
 
 @Injectable()
 export class RemindersService {
@@ -15,9 +16,16 @@ export class RemindersService {
   ) {}
 
   async create(data: Prisma.ReminderCreateInput): Promise<Reminder> {
+    const allUserReminders = await this.db.reminder.count({
+      where: {
+        user: { id: data.user as string },
+      },
+    })
+
     return this.db.reminder.create({
       data: {
         ...data,
+        emoji: emojis[allUserReminders],
         notificationTime: new Date(data.notificationTime),
         user: {
           connect: { id: data.user as string },
@@ -50,7 +58,7 @@ export class RemindersService {
     return this.db.reminder.delete({ where })
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  // @Cron(CronExpression.EVERY_MINUTE)
   async sendReminders() {
     const now = new Date()
     const notificationHour = `${now.getUTCHours()}`.padStart(2, '0')
@@ -68,7 +76,7 @@ export class RemindersService {
     })
 
     remindersToSend.forEach((reminder) => {
-      this.logger.log(`Sending reminder to ${reminder.id}`)
+      this.logger.log(`Sending reminder to ${reminder.emoji} ${reminder.id}`)
       this.messageService.create(reminder.id)
     })
   }

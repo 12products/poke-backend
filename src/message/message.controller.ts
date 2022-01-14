@@ -7,6 +7,7 @@ import {
   Param,
   Body,
   Delete,
+  Get,
 } from '@nestjs/common'
 import { MessageService } from './message.service'
 import { Prisma } from '@prisma/client'
@@ -14,6 +15,11 @@ import { Prisma } from '@prisma/client'
 @Controller('message')
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
+  //Todo: delete after testing
+  @Get()
+  findAll() {
+    return this.messageService.findAll()
+  }
 
   @Post()
   sendMessage(reminderId: string) {
