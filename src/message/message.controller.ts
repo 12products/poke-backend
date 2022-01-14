@@ -1,5 +1,15 @@
-import { Controller, Header, Post, Req } from '@nestjs/common'
+import {
+  Controller,
+  Header,
+  Post,
+  Req,
+  Patch,
+  Param,
+  Body,
+  Delete,
+} from '@nestjs/common'
 import { MessageService } from './message.service'
+import { Prisma } from '@prisma/client'
 
 @Controller('message')
 export class MessageController {
@@ -14,5 +24,18 @@ export class MessageController {
   @Header('Content-Type', 'text/xml')
   receiveMessage(@Req() req) {
     return this.messageService.receiveMessage(req)
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() data: Prisma.MessageUpdateInput) {
+    return this.messageService.update({
+      where: { id },
+      data,
+    })
+  }
+
+  @Delete(':id')
+  remove(@Param('id') id: string) {
+    return this.messageService.remove({ id })
   }
 }
