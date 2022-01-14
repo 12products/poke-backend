@@ -63,6 +63,7 @@ export class MessageService {
       where: { id: reminderId },
       data: { updatedAt: new Date() },
     })
+
     return response
   }
 
@@ -84,13 +85,13 @@ export class MessageService {
       }
     }
 
-    return await this.twilio.respondMessage(pokeResponse)
+    return await this.twilio.respondToMessage(pokeResponse)
   }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  // @Cron(CronExpression.EVERY_5_MINUTES)
   async resendMessage() {
     this.logger.log('Sending a poke to user')
-    // determines the time 1 hour ago from now
+    // Determines the time 1 hour ago from now
     const reminderTime = new Date()
     reminderTime.setHours(reminderTime.getHours() - 1)
     // Finds all messages where its updated time is less than reminder time, aka updatedan more than 1 hour ago

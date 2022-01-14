@@ -15,7 +15,7 @@ import { Prisma } from '@prisma/client'
 @Controller('message')
 export class MessageController {
   constructor(private readonly messageService: MessageService) {}
-
+  //Todo: delete after testing
   @Get()
   findAll() {
     return this.messageService.findAll()

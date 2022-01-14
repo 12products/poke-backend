@@ -18,7 +18,7 @@ export class TwilioService {
     this.twiml = twilio.twiml
   }
   // used to respond to texts we recieve from users
-  async respondMessage(pokeResponse: string) {
+  async respondToMessage(pokeResponse: string) {
     const twimlResponse = new this.twiml.MessagingResponse()
     twimlResponse.message(pokeResponse)
     return twimlResponse.toString()
