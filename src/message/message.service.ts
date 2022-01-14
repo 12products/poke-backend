@@ -41,13 +41,12 @@ export class MessageService {
       reminder.text,
       reminder.user.phone
     )
-    console.log({ response })
   }
 
   async receiveMessage(req) {
     const userResponse = req.body.Body
-    const message = await this.twilio.respondMessage(userResponse)
-    return message
+
+    return await this.twilio.respondMessage(userResponse)
   }
 
   @Cron(CronExpression.EVERY_5_MINUTES)
