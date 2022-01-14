@@ -58,14 +58,24 @@ export class MessageService {
   }
 
   async receiveMessage(req) {
+    let pokeResponse = `We'll give you another poke in an hour!`
     const userResponse = req.body.Body
-    // const reminderId = await this.db.user.findUnique({
-    //   where: { phone: req.body.From },
-    // })
-    // if (userResponse === 'correct emoji') {
-    //   await this.remove(where: {id: req.id})
-    // }
-    return await this.twilio.respondMessage(userResponse)
+    const user = await this.db.user.findUnique({
+      where: { phone: req.body.From },
+      include: {
+        reminders: true,
+      },
+    })
+
+    for (const reminder of user.reminders) {
+      if (reminder.emoji === userResponse) {
+        this.remove({ reminderId: reminder.id })
+        pokeResponse = 'Great work!'
+        break
+      }
+    }
+
+    return await this.twilio.respondMessage(pokeResponse)
   }
 
   // @Cron(CronExpression.EVERY_5_MINUTES)

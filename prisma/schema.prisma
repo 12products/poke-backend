@@ -24,8 +24,8 @@ model Reminder {
 
 model User {
   id        String     @id @default(uuid())
-  name      String     @unique
-  phone     String
+  name      String
+  phone     String     @unique
   email     String
   password  String
   reminders Reminder[]
