@@ -11,6 +11,11 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter()
   )
+  // Todo: need to update origin once we deploy
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  })
 
   app.setGlobalPrefix('/v1')
 
