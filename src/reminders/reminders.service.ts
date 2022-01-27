@@ -15,10 +15,10 @@ export class RemindersService {
     private readonly messageService: MessageService
   ) {}
 
-  async create(data: Prisma.ReminderCreateInput): Promise<Reminder> {
+  async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
     const allUserReminders = await this.db.reminder.count({
       where: {
-        user: { id: data.user as string },
+        user: { id: user.id },
       },
     })
 
@@ -28,7 +28,7 @@ export class RemindersService {
         emoji: emojis[allUserReminders],
         notificationTime: new Date(data.notificationTime),
         user: {
-          connect: { id: data.user as string },
+          connect: { id: user.id },
         },
       },
     })
