@@ -7,9 +7,12 @@ import {
   Param,
   Delete,
 } from '@nestjs/common'
+import { AuthUser } from '@supabase/supabase-js'
+import { AuthGuard } from '@nestjs/passport'
 
 import { RemindersService } from './reminders.service'
 import { Prisma } from '@prisma/client'
+import { CurrentUser } from '../auth/current-user.decorator'
 
 @Controller('reminders')
 export class RemindersController {
@@ -26,8 +29,11 @@ export class RemindersController {
   }
 
   @Post()
-  create(@Body() data: Prisma.ReminderCreateInput) {
-    return this.remindersService.create(data)
+  create(
+    @Body() data: Prisma.ReminderCreateInput,
+    @CurrentUser() user: AuthUser
+  ) {
+    return this.remindersService.create(user, data)
   }
 
   @Patch(':id')
