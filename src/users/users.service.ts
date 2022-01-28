@@ -7,6 +7,16 @@ import { DatabaseService } from 'src/database/database.service'
 export class UsersService {
   constructor(private readonly db: DatabaseService) {}
 
+  async onboard(data: Prisma.UserCreateInput): Promise<User> {
+    const user = await this.findOne({ id: data.id })
+
+    if (user) {
+      return user
+    }
+
+    return this.db.user.create({ data })
+  }
+
   create(data: Prisma.UserCreateInput): Promise<User> {
     return this.db.user.create({ data })
   }

@@ -8,7 +8,6 @@ import {
   Delete,
 } from '@nestjs/common'
 import { AuthUser } from '@supabase/supabase-js'
-import { AuthGuard } from '@nestjs/passport'
 
 import { RemindersService } from './reminders.service'
 import { Prisma } from '@prisma/client'
