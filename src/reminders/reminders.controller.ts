@@ -6,7 +6,6 @@ import {
   Patch,
   Param,
   Delete,
-  UseGuards,
 } from '@nestjs/common'
 import { AuthUser } from '@supabase/supabase-js'
 import { AuthGuard } from '@nestjs/passport'
@@ -30,7 +29,6 @@ export class RemindersController {
   }
 
   @Post()
-  @UseGuards(AuthGuard('supabase'))
   create(
     @Body() data: Prisma.ReminderCreateInput,
     @CurrentUser() user: AuthUser
