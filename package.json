@@ -36,6 +36,7 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
+    "stripe": "^8.201.0",
     "twilio": "^3.73.0",
     "twilio-cli": "^2.36.1"
   },
