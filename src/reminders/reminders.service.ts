@@ -21,11 +21,11 @@ export class RemindersService {
         user: { id: user.id },
       },
     })
-
+    const idx = allUserReminders % emojis.length
     return this.db.reminder.create({
       data: {
         ...data,
-        emoji: emojis[allUserReminders],
+        emoji: emojis[idx],
         notificationTime: new Date(data.notificationTime),
         user: {
           connect: { id: user.id },
