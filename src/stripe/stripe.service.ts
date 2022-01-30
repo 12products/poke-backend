@@ -20,8 +20,8 @@ export class StripeService {
     return customer
   }
 
-  async createPaymentSheet() {
-    this.logger.log('Creating payment sheet')
+  async createPaymentIntent() {
+    this.logger.log('Creating payment intent')
     const customer = await this.createCustomer()
     const ephemeralkey = await this.stripeClient.ephemeralKeys.create(
       { customer: customer.id },

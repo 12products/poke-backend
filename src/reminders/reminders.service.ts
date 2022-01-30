@@ -35,7 +35,7 @@ export class RemindersService {
   }
 
   async findAll(): Promise<Reminder[]> {
-    return this.db.reminder.findMany()
+    return this.db.reminder.findMany() || []
   }
 
   async findOne(

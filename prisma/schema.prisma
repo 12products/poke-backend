@@ -23,11 +23,13 @@ model Reminder {
 }
 
 model User {
-  id        String     @id @default(uuid())
-  name      String?
-  phone     String     @unique
-  onboarded Boolean    @default(false)
-  reminders Reminder[]
+  id                 String     @id @default(uuid())
+  name               String?
+  phone              String     @unique
+  onboarded          Boolean    @default(false)
+  subscriptionId     String?
+  subscriptionStatus Boolean    @default(false)
+  reminders          Reminder[]
 }
 
 model Message {
