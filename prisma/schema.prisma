@@ -18,6 +18,7 @@ model Reminder {
   userId           String
   message          Message?
   emoji            String
+  color            String   @default("blue")
   createdAt        DateTime @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime @default(now()) @db.Timestamptz(6)
 }
