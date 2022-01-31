@@ -68,7 +68,7 @@ export class MessageService {
   }
 
   async receiveMessage(req) {
-    let pokeResponse = `We'll give you another poke in an hour!`
+    let pokeResponse = `We'll give you another poke in a bit!`
     const userResponse = req.body.Body.trim()
     const user = await this.db.user.findUnique({
       where: { phone: req.body.From },
@@ -127,11 +127,14 @@ export class MessageService {
       })
     })
 
-    // Delete message if more than 3 hours
+    const sixHoursAgo = new Date()
+    sixHoursAgo.setHours(sixHoursAgo.getHours() - 6)
+
+    // Delete message if more than 6 hours
     const expiredMessages = await this.db.message.findMany({
       where: {
-        updatedAt: {
-          gt: reminderThreeHoursAgo,
+        createdAt: {
+          lt: sixHoursAgo,
         },
       },
     })
@@ -141,3 +144,9 @@ export class MessageService {
     })
   }
 }
+// created   updated
+// 4 : 4:01, 5:02, 7:02
+// 5 : 5   6  8  11
+
+// 7
+// cannot match exact time

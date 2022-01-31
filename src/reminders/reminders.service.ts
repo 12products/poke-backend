@@ -16,6 +16,11 @@ export class RemindersService {
   ) {}
 
   async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
+    const userInputNotificationTime = new Date(data.notificationTime)
+    const notificationHour =
+      `${userInputNotificationTime.getUTCHours()}`.padStart(2, '0')
+    const notificationMinutes =
+      `${userInputNotificationTime.getUTCMinutes()}`.padStart(2, '0')
     const allUserReminders = await this.db.reminder.count({
       where: {
         user: { id: user.id },
@@ -28,7 +33,9 @@ export class RemindersService {
       data: {
         ...data,
         emoji: emojis[idx],
-        notificationTime: new Date(data.notificationTime),
+        notificationTime: new Date(
+          `01/01/2001 ${notificationHour}:${notificationMinutes} UTC`
+        ),
         user: {
           connect: { id: user.id },
         },

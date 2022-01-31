@@ -37,5 +37,6 @@ model Message {
   reminder   Reminder @relation(fields: [reminderId], references: [id])
   reminderId String   @unique
   createdAt  DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt  DateTime @default(now()) @db.Timestamptz(6) // "2022-01-11T07:20:49.271Z"
+  nextSend   DateTime @default(now()) @db.Timestamptz(6) // "2022-01-11T07:20:49.271Z"
+  tries      Int      @default(0)
 }
