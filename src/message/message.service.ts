@@ -91,16 +91,29 @@ export class MessageService {
   // @Cron(CronExpression.EVERY_5_MINUTES)
   async resendMessage() {
     this.logger.log('Sending a poke to user')
-    // Determines the time 1 hour ago from now
-    const reminderTime = new Date()
-    reminderTime.setHours(reminderTime.getHours() - 1)
+    // Determines the time 1 hour ago from now, 2 hours ago, 3 hours ago
+    const reminderOneHourAgo = new Date()
+    const reminderTwoHoursAgo = new Date(reminderOneHourAgo)
+    const reminderThreeHoursAgo = new Date(reminderOneHourAgo)
+    reminderOneHourAgo.setHours(reminderOneHourAgo.getHours() - 1)
+    reminderTwoHoursAgo.setHours(reminderTwoHoursAgo.getHours() - 2)
+    reminderThreeHoursAgo.setHours(reminderThreeHoursAgo.getHours() - 3)
     // Finds all messages where its updated time is less than reminder time, aka updatedan more than 1 hour ago
     const allMessages = await this.db.message.findMany({
       where: {
-        updatedAt: {
-          lte: reminderTime,
-        },
+        OR: [
+          {
+            updatedAt: reminderOneHourAgo,
+          },
+          {
+            updatedAt: reminderTwoHoursAgo,
+          },
+          {
+            updatedAt: reminderThreeHoursAgo,
+          },
+        ],
       },
+
       include: {
         reminder: true,
       },
@@ -112,6 +125,19 @@ export class MessageService {
         where: { id: message.id },
         data: { updatedAt: new Date() },
       })
+    })
+
+    // Delete message if more than 3 hours
+    const expiredMessages = await this.db.message.findMany({
+      where: {
+        updatedAt: {
+          gt: reminderThreeHoursAgo,
+        },
+      },
+    })
+
+    expiredMessages.forEach(async (message) => {
+      await this.remove({ id: message.id })
     })
   }
 }
