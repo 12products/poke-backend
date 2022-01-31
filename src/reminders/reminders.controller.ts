@@ -18,13 +18,13 @@ export class RemindersController {
   constructor(private readonly remindersService: RemindersService) {}
 
   @Get()
-  findAll() {
-    return this.remindersService.findAll()
+  findAll(@CurrentUser() user: AuthUser) {
+    return this.remindersService.findAll(user.id)
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.remindersService.findOne({ id })
+  findOne(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.remindersService.findOne({ id }, user.id)
   }
 
   @Post()
@@ -36,15 +36,20 @@ export class RemindersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() data: Prisma.ReminderUpdateInput) {
+  update(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() data: Prisma.ReminderUpdateInput
+  ) {
     return this.remindersService.update({
       where: { id },
       data,
+      userId: user.id,
     })
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.remindersService.remove({ id })
+  remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.remindersService.remove({ id }, user.id)
   }
 }
