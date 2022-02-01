@@ -27,7 +27,7 @@ export class SubscriptionsService {
     try {
       const products = await appleReceiptVerify.validate({ receipt })
       const uniqueTransactions = [
-        ...new Set(products.map((product) => product.originalTransactionId)),
+        ...new Set(products.map((product) => product.productId)),
       ]
 
       if (uniqueTransactions.length) {
