@@ -1,4 +1,5 @@
 import { Controller, Header, Post, Req } from '@nestjs/common'
+import { Public } from 'src/auth/public.decorator'
 import { MessageService } from './message.service'
 
 @Controller('message')
@@ -11,6 +12,7 @@ export class MessageController {
   }
 
   @Post('sms')
+  @Public()
   @Header('Content-Type', 'text/xml')
   receiveMessage(@Req() req) {
     return this.messageService.receiveMessage(req)
