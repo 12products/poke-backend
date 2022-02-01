@@ -31,6 +31,7 @@
     "@prisma/client": "3.7.0",
     "@supabase/supabase-js": "^1.29.3",
     "nestjs-supabase-auth": "^1.0.9",
+    "node-apple-receipt-verify": "^1.12.1",
     "passport": "^0.5.2",
     "passport-jwt": "^4.0.0",
     "reflect-metadata": "^0.1.13",
