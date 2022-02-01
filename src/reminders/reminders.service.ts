@@ -74,6 +74,7 @@ export class RemindersService {
   ): Promise<Reminder> {
     const reminder = await this.db.reminder.findUnique({ where })
     if (reminder.userId !== userId) return
+
     return this.db.reminder.delete({
       where: {
         id: where.id,
