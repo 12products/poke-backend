@@ -5,7 +5,7 @@ import { Reminder, Prisma, User } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
 import { emojis } from '../constants'
-import { getNotificationTime } from 'utils'
+import { getNotificationTime } from '../utils'
 
 @Injectable()
 export class RemindersService {

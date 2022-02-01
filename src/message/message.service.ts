@@ -4,7 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 import { Message, Prisma } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
-import { getNotificationTime, getNextSendTime } from 'utils'
+import { getNotificationTime, getNextSendTime } from '../utils'
 
 @Injectable()
 export class MessageService {
