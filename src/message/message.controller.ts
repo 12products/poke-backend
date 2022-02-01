@@ -21,6 +21,11 @@ export class MessageController {
     return this.messageService.findAll()
   }
 
+  @Get('id')
+  findOne(@Param('id') id: string) {
+    return this.messageService.findOne({ id })
+  }
+
   @Post()
   sendMessage(reminderId: string) {
     return this.messageService.sendMessage(reminderId)

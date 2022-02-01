@@ -5,6 +5,7 @@ import { Reminder, Prisma } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
 import { emojis } from '../constants'
+import { getNotificationTime } from 'utils'
 
 @Injectable()
 export class RemindersService {
@@ -16,11 +17,6 @@ export class RemindersService {
   ) {}
 
   async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
-    const userInputNotificationTime = new Date(data.notificationTime)
-    const notificationHour =
-      `${userInputNotificationTime.getUTCHours()}`.padStart(2, '0')
-    const notificationMinutes =
-      `${userInputNotificationTime.getUTCMinutes()}`.padStart(2, '0')
     const allUserReminders = await this.db.reminder.count({
       where: {
         user: { id: user.id },
@@ -33,9 +29,7 @@ export class RemindersService {
       data: {
         ...data,
         emoji: emojis[idx],
-        notificationTime: new Date(
-          `01/01/2001 ${notificationHour}:${notificationMinutes} UTC`
-        ),
+        notificationTime: getNotificationTime(data.notificationTime),
         user: {
           connect: { id: user.id },
         },
@@ -90,14 +84,10 @@ export class RemindersService {
   // @Cron(CronExpression.EVERY_MINUTE)
   async sendReminders() {
     const now = new Date()
-    const notificationHour = `${now.getUTCHours()}`.padStart(2, '0')
-    const notificationMinutes = `${now.getUTCMinutes()}`.padStart(2, '0')
 
     const remindersToSend = await this.db.reminder.findMany({
       where: {
-        notificationTime: new Date(
-          `01/01/2001 ${notificationHour}:${notificationMinutes} UTC`
-        ),
+        notificationTime: getNotificationTime(now),
         notificationDays: {
           has: now.getDay(),
         },

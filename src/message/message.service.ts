@@ -4,6 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 import { Message, Prisma } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
 import { TwilioService } from 'src/twilio/twilio.service'
+import { getNotificationTime, getNextSendTime } from 'utils'
 
 @Injectable()
 export class MessageService {
@@ -15,6 +16,13 @@ export class MessageService {
   ) {}
 
   async create(reminderId: string): Promise<Message> {
+    //if message still exists, remove before creating new one
+    const hasMessage: Message | null = await this.findOne({ reminderId })
+
+    if (hasMessage) {
+      await this.remove({ reminderId })
+    }
+
     const message = await this.db.message.create({
       data: {
         reminder: {
@@ -24,6 +32,13 @@ export class MessageService {
     })
 
     await this.sendMessage(reminderId)
+
+    // update nextSend time to 1 hour from now, tries = 1
+    const nextSend = getNextSendTime(new Date(), 0)
+    this.update({
+      where: { reminderId },
+      data: { nextSend, tries: 1 },
+    })
 
     return message
   }
@@ -44,6 +59,12 @@ export class MessageService {
 
   async findAll(): Promise<Message[]> {
     return this.db.message.findMany()
+  }
+
+  async findOne(
+    where: Prisma.MessageWhereUniqueInput
+  ): Promise<Message | null> {
+    return await this.db.message.findUnique({ where })
   }
 
   async sendMessage(reminderId: string) {
@@ -91,62 +112,27 @@ export class MessageService {
   // @Cron(CronExpression.EVERY_5_MINUTES)
   async resendMessage() {
     this.logger.log('Sending a poke to user')
-    // Determines the time 1 hour ago from now, 2 hours ago, 3 hours ago
-    const reminderOneHourAgo = new Date()
-    const reminderTwoHoursAgo = new Date(reminderOneHourAgo)
-    const reminderThreeHoursAgo = new Date(reminderOneHourAgo)
-    reminderOneHourAgo.setHours(reminderOneHourAgo.getHours() - 1)
-    reminderTwoHoursAgo.setHours(reminderTwoHoursAgo.getHours() - 2)
-    reminderThreeHoursAgo.setHours(reminderThreeHoursAgo.getHours() - 3)
-    // Finds all messages where its updated time is less than reminder time, aka updatedan more than 1 hour ago
+
+    // Finds all messages with nextSend time as now
     const allMessages = await this.db.message.findMany({
       where: {
-        OR: [
-          {
-            updatedAt: reminderOneHourAgo,
-          },
-          {
-            updatedAt: reminderTwoHoursAgo,
-          },
-          {
-            updatedAt: reminderThreeHoursAgo,
-          },
-        ],
+        nextSend: {
+          lte: getNotificationTime(new Date()),
+        },
       },
 
       include: {
         reminder: true,
       },
     })
-    // Loop through every existing message and send poke and update updatedAt time
+
     allMessages.forEach(async (message) => {
       await this.sendMessage(message.reminder.id)
+      const nextSend = getNextSendTime(new Date(), message.tries)
       await this.update({
         where: { id: message.id },
-        data: { updatedAt: new Date() },
+        data: { nextSend, tries: message.tries + 1 },
       })
-    })
-
-    const sixHoursAgo = new Date()
-    sixHoursAgo.setHours(sixHoursAgo.getHours() - 6)
-
-    // Delete message if more than 6 hours
-    const expiredMessages = await this.db.message.findMany({
-      where: {
-        createdAt: {
-          lt: sixHoursAgo,
-        },
-      },
-    })
-
-    expiredMessages.forEach(async (message) => {
-      await this.remove({ id: message.id })
     })
   }
 }
-// created   updated
-// 4 : 4:01, 5:02, 7:02
-// 5 : 5   6  8  11
-
-// 7
-// cannot match exact time
