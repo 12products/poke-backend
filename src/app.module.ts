@@ -10,6 +10,7 @@ import { AppController } from './app.controller'
 import { MessageModule } from './message/message.module'
 import { TwilioModule } from './twilio/twilio.module'
 import { AuthModule } from './auth/auth.module'
+import { SubscriptionsModule } from './subscriptions/subscriptions.module'
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuthModule } from './auth/auth.module'
     MessageModule,
     TwilioModule,
     AuthModule,
+    SubscriptionsModule,
   ],
   controllers: [AppController],
   providers: [
