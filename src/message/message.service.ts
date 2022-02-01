@@ -16,29 +16,26 @@ export class MessageService {
   ) {}
 
   async create(reminderId: string): Promise<Message> {
-    //if message still exists, remove before creating new one
+    // //if message still exists, remove before creating new one
     const hasMessage: Message | null = await this.findOne({ reminderId })
 
     if (hasMessage) {
       await this.remove({ reminderId })
     }
+    // update nextSend time to 1 hour from now
+    const nextSend = getNextSendTime(new Date(), 1)
 
     const message = await this.db.message.create({
       data: {
         reminder: {
           connect: { id: reminderId },
         },
+        nextSend,
+        active: true,
       },
     })
 
     await this.sendMessage(reminderId)
-
-    // update nextSend time to 1 hour from now, tries = 1
-    const nextSend = getNextSendTime(new Date(), 0)
-    this.update({
-      where: { reminderId },
-      data: { nextSend, tries: 1 },
-    })
 
     return message
   }
@@ -80,11 +77,6 @@ export class MessageService {
       reminder.user.phone
     )
 
-    await this.db.reminder.update({
-      where: { id: reminderId },
-      data: { updatedAt: new Date() },
-    })
-
     return response
   }
 
@@ -116,9 +108,16 @@ export class MessageService {
     // Finds all messages with nextSend time as now
     const allMessages = await this.db.message.findMany({
       where: {
-        nextSend: {
-          lte: getNotificationTime(new Date()),
-        },
+        AND: [
+          {
+            nextSend: {
+              lte: getNotificationTime(new Date()),
+            },
+          },
+          {
+            active: true,
+          },
+        ],
       },
 
       include: {
@@ -129,9 +128,10 @@ export class MessageService {
     allMessages.forEach(async (message) => {
       await this.sendMessage(message.reminder.id)
       const nextSend = getNextSendTime(new Date(), message.tries)
+      const active = message.tries <= 4
       await this.update({
         where: { id: message.id },
-        data: { nextSend, tries: message.tries + 1 },
+        data: { nextSend, tries: message.tries + 1, active },
       })
     })
   }

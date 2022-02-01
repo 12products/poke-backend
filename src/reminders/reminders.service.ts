@@ -17,13 +17,13 @@ export class RemindersService {
   ) {}
 
   async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
-    const allUserReminders = await this.db.reminder.count({
+    const reminderCount = await this.db.reminder.count({
       where: {
         user: { id: user.id },
       },
     })
 
-    const idx = allUserReminders % emojis.length
+    const idx = reminderCount % emojis.length
 
     return this.db.reminder.create({
       data: {

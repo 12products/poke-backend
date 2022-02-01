@@ -38,5 +38,6 @@ model Message {
   reminderId String   @unique
   createdAt  DateTime @default(now()) @db.Timestamptz(6)
   nextSend   DateTime @default(now()) @db.Timestamptz(6) // "2022-01-11T07:20:49.271Z"
-  tries      Int      @default(0)
+  tries      Int      @default(1)
+  active     Boolean  @default(false)
 }
