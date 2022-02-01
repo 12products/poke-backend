@@ -5,6 +5,7 @@ import { Reminder, Prisma } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
 import { emojis } from '../constants'
+import { getNotificationTime } from 'utils'
 
 @Injectable()
 export class RemindersService {
@@ -16,17 +17,19 @@ export class RemindersService {
   ) {}
 
   async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
-    const allUserReminders = await this.db.reminder.count({
+    const reminderCount = await this.db.reminder.count({
       where: {
         user: { id: user.id },
       },
     })
 
+    const idx = reminderCount % emojis.length
+
     return this.db.reminder.create({
       data: {
         ...data,
-        emoji: emojis[allUserReminders],
-        notificationTime: new Date(data.notificationTime),
+        emoji: emojis[idx],
+        notificationTime: getNotificationTime(data.notificationTime),
         user: {
           connect: { id: user.id },
         },
@@ -34,41 +37,58 @@ export class RemindersService {
     })
   }
 
-  async findAll(): Promise<Reminder[]> {
-    return this.db.reminder.findMany()
+  async findAll(userId: string): Promise<Reminder[]> {
+    return this.db.reminder.findMany({
+      where: {
+        userId,
+      },
+    })
   }
 
   async findOne(
-    where: Prisma.ReminderWhereUniqueInput
+    where: Prisma.ReminderWhereUniqueInput,
+    userId: string
   ): Promise<Reminder | null> {
-    return this.db.reminder.findUnique({ where })
+    const reminder = await this.db.reminder.findUnique({ where })
+    return reminder.userId === userId ? reminder : null
   }
 
   async update({
     where,
     data,
+    userId,
   }: {
     where: Prisma.ReminderWhereUniqueInput
     data: Prisma.ReminderUpdateInput
+    userId: string
   }): Promise<Reminder> {
+    const reminder = await this.db.reminder.findUnique({ where })
+    if (reminder.userId !== userId) return
+
     return this.db.reminder.update({ where, data })
   }
 
-  async remove(where: Prisma.ReminderWhereUniqueInput): Promise<Reminder> {
-    return this.db.reminder.delete({ where })
+  async remove(
+    where: Prisma.ReminderWhereUniqueInput,
+    userId: string
+  ): Promise<Reminder> {
+    const reminder = await this.db.reminder.findUnique({ where })
+    if (reminder.userId !== userId) return
+
+    return this.db.reminder.delete({
+      where: {
+        id: where.id,
+      },
+    })
   }
 
   // @Cron(CronExpression.EVERY_MINUTE)
   async sendReminders() {
     const now = new Date()
-    const notificationHour = `${now.getUTCHours()}`.padStart(2, '0')
-    const notificationMinutes = `${now.getUTCMinutes()}`.padStart(2, '0')
 
     const remindersToSend = await this.db.reminder.findMany({
       where: {
-        notificationTime: new Date(
-          `01/01/2001 ${notificationHour}:${notificationMinutes} UTC`
-        ),
+        notificationTime: getNotificationTime(now),
         notificationDays: {
           has: now.getDay(),
         },
