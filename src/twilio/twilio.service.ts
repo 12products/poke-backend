@@ -6,14 +6,12 @@ import * as twilio from 'twilio'
 export class TwilioService {
   private twilioClient: twilio.Twilio
   private twilioPhone: string
-  private tempPhone: string
   private twiml: twilio.TwimlInterface
 
   constructor(private readonly configService: ConfigService) {
     const accountID = this.configService.get<string>('TWILIO_ACCOUNT_ID')
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN')
     this.twilioPhone = this.configService.get<string>('TWILIO_PHONE')
-    this.tempPhone = this.configService.get<string>('TEMP_PHONE')
     this.twilioClient = twilio(accountID, authToken)
     this.twiml = twilio.twiml
   }
@@ -29,7 +27,7 @@ export class TwilioService {
     const sentMessage = await this.twilioClient.messages.create({
       body,
       from: this.twilioPhone,
-      to: this.tempPhone,
+      to: phone,
     })
     return sentMessage
   }
