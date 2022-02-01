@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
-import { Reminder, Prisma } from '@prisma/client'
+import { Reminder, Prisma, User } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
 import { emojis } from '../constants'
@@ -22,6 +22,14 @@ export class RemindersService {
         user: { id: user.id },
       },
     })
+
+    const currentUser: User = await this.db.user.findUnique({
+      where: { id: user.id },
+    })
+
+    if (!currentUser.activeSubscription && reminderCount) {
+      throw new Error('Need an active subscription for more reminders')
+    }
 
     const idx = reminderCount % emojis.length
 
