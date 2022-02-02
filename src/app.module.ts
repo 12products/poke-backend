@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
 import { APP_GUARD } from '@nestjs/core'
-import { AuthGuard } from '@nestjs/passport'
 
 import { RemindersModule } from './reminders/reminders.module'
 import { UsersModule } from './users/users.module'
@@ -11,6 +10,7 @@ import { MessageModule } from './message/message.module'
 import { TwilioModule } from './twilio/twilio.module'
 import { AuthModule } from './auth/auth.module'
 import { SubscriptionsModule } from './subscriptions/subscriptions.module'
+import { PokeAuthGuard } from './auth/auth.guard'
 
 @Module({
   imports: [
@@ -27,7 +27,7 @@ import { SubscriptionsModule } from './subscriptions/subscriptions.module'
   providers: [
     {
       provide: APP_GUARD,
-      useClass: AuthGuard('supabase'),
+      useClass: PokeAuthGuard,
     },
   ],
 })

@@ -11,8 +11,8 @@ export class MessageController {
     return this.messageService.sendMessage(reminderId)
   }
 
-  @Post('sms')
   @Public()
+  @Post('sms')
   @Header('Content-Type', 'text/xml')
   receiveMessage(@Req() req) {
     return this.messageService.receiveMessage(req)
