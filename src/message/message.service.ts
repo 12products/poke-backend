@@ -24,7 +24,9 @@ export class MessageService {
     }
     // update nextSend time to 1 hour from now
     const nextSend = getNextSendTime(new Date(), 1)
-
+    this.logger.log(
+      `Creating message for reminder ${reminderId}, next send time ${nextSend}`
+    )
     const message = await this.db.message.create({
       data: {
         reminder: {
@@ -73,10 +75,12 @@ export class MessageService {
     })
 
     const response = await this.twilio.sendMessage(
-      reminder.text,
+      `${reminder.text}.\n\nRespond with ${reminder.emoji} to confirm.`,
       reminder.user.phone
     )
-
+    this.logger.log(
+      `Message sending to ${reminderId}, response from twillio ${response}`
+    )
     return response
   }
 
@@ -97,11 +101,13 @@ export class MessageService {
         break
       }
     }
-
+    this.logger.log(
+      `Received message from outside for user ${user.name}, pokeResponse is ${pokeResponse}`
+    )
     return await this.twilio.respondToMessage(pokeResponse)
   }
 
-  // @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async resendMessage() {
     this.logger.log('Sending a poke to user')
 
@@ -129,6 +135,11 @@ export class MessageService {
       await this.sendMessage(message.reminder.id)
       const nextSend = getNextSendTime(new Date(), message.tries)
       const active = message.tries <= 4
+      this.logger.log(
+        `Resending message ${message.id} with tries ${
+          message.tries
+        }that matches nextSend of ${getNotificationTime(new Date())} `
+      )
       await this.update({
         where: { id: message.id },
         data: { nextSend, tries: message.tries + 1, active },

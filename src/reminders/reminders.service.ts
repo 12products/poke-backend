@@ -32,7 +32,9 @@ export class RemindersService {
     }
 
     const idx = reminderCount % emojis.length
-
+    this.logger.log(
+      `Creating reminder... Cuurrently has ${reminderCount} count, currentUser ${currentUser.name}`
+    )
     return this.db.reminder.create({
       data: {
         ...data,
@@ -72,7 +74,9 @@ export class RemindersService {
   }): Promise<Reminder> {
     const reminder = await this.db.reminder.findUnique({ where })
     if (reminder.userId !== userId) return
-
+    this.logger.log(
+      `Updating reminder ${reminder.id} with ${JSON.stringify(data)}`
+    )
     return this.db.reminder.update({ where, data })
   }
 
@@ -82,7 +86,7 @@ export class RemindersService {
   ): Promise<Reminder> {
     const reminder = await this.db.reminder.findUnique({ where })
     if (reminder.userId !== userId) return
-
+    this.logger.log(`Removing reminder ${reminder.id}`)
     return this.db.reminder.delete({
       where: {
         id: where.id,
@@ -90,7 +94,7 @@ export class RemindersService {
     })
   }
 
-  // @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_MINUTE)
   async sendReminders() {
     const now = new Date()
 
@@ -104,7 +108,11 @@ export class RemindersService {
     })
 
     remindersToSend.forEach((reminder) => {
-      this.logger.log(`Sending reminder to ${reminder.emoji} ${reminder.id}`)
+      this.logger.log(
+        `Sending reminder to ${reminder.emoji} ${
+          reminder.id
+        } at time ${getNotificationTime(now)}`
+      )
       this.messageService.create(reminder.id)
     })
   }
