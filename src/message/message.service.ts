@@ -97,6 +97,10 @@ export class MessageService {
       },
     })
 
+    if (!user) {
+      return
+    }
+
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
         this.remove({ reminderId: reminder.id })
