@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
+import { utcToZonedTime } from 'date-fns-tz'
 
 import { Reminder, Prisma, User } from '@prisma/client'
 import { MessageService } from '../message/message.service'
@@ -35,15 +36,16 @@ export class RemindersService {
     this.logger.log(
       `Creating reminder...${
         data.notificationTime
-      } stored as ${getNotificationTime(data.notificationTime)} , ${
+      } stored as ${getNotificationTime(new Date(data.notificationTime))} , ${
         data.notificationDays
       }}`
     )
+
     return this.db.reminder.create({
       data: {
         ...data,
         emoji: emojis[idx],
-        notificationTime: getNotificationTime(data.notificationTime),
+        notificationTime: getNotificationTime(new Date(data.notificationTime)),
         user: {
           connect: { id: user.id },
         },
@@ -113,18 +115,22 @@ export class RemindersService {
     })
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async sendReminders() {
     const now = new Date()
 
-    const remindersToSend = await this.db.reminder.findMany({
+    let remindersToSend = await this.db.reminder.findMany({
       where: {
         notificationTime: getNotificationTime(now),
-        notificationDays: {
-          has: now.getDay(),
-        },
       },
     })
+
+    remindersToSend = remindersToSend.filter((reminder) => {
+      const userLocalNow = utcToZonedTime(now, reminder.timeZone)
+      return reminder.notificationDays.includes(userLocalNow.getDay())
+    })
+
+    this.logger.log(`Found ${remindersToSend.length} reminders to send`)
 
     remindersToSend.forEach((reminder) => {
       this.logger.log(

@@ -10,8 +10,7 @@ datasource db {
 model Reminder {
   id               String   @id @default(uuid())
   text             String
-  // time (ie 01:02) in UTC
-  notificationTime DateTime @db.Time(0)
+  notificationTime DateTime @db.Timestamptz(6)
   // 0 indexed; 0 = Sunday, 6 = Saturday, etc.
   notificationDays Int[]
   user             User     @relation(fields: [userId], references: [id])
@@ -21,6 +20,7 @@ model Reminder {
   color            String   @default("blue")
   createdAt        DateTime @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime @default(now()) @db.Timestamptz(6)
+  timeZone         String
 }
 
 model User {
@@ -37,7 +37,7 @@ model Message {
   reminder   Reminder @relation(fields: [reminderId], references: [id])
   reminderId String   @unique
   createdAt  DateTime @default(now()) @db.Timestamptz(6)
-  nextSend   DateTime @default(now()) @db.Timestamptz(6) // "2022-01-11T07:20:49.271Z"
+  nextSend   DateTime @default(now()) @db.Timestamptz(6)
   tries      Int      @default(1)
   active     Boolean  @default(false)
 }
