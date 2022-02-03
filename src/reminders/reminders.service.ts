@@ -33,7 +33,11 @@ export class RemindersService {
 
     const idx = reminderCount % emojis.length
     this.logger.log(
-      `Creating reminder... Cuurrently has ${reminderCount} count, currentUser ${currentUser.name}`
+      `Creating reminder...${
+        data.notificationTime
+      } stored as ${getNotificationTime(data.notificationTime)} , ${
+        data.notificationDays
+      }}`
     )
     return this.db.reminder.create({
       data: {

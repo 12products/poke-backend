@@ -85,6 +85,7 @@ export class MessageService {
   }
 
   async receiveMessage(req) {
+    this.logger.log(`Received message from user ${JSON.stringify(req)}`)
     let pokeResponse = `We'll give you another poke in a bit!`
     const userResponse = req.body.Body.trim()
     const user = await this.db.user.findUnique({
@@ -109,7 +110,7 @@ export class MessageService {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async resendMessage() {
-    this.logger.log('Sending a poke to user')
+    this.logger.log('Re-sending a poke to user')
 
     // Finds all messages with nextSend time as now
     const allMessages = await this.db.message.findMany({
