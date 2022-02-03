@@ -86,7 +86,22 @@ export class RemindersService {
   ): Promise<Reminder> {
     const reminder = await this.db.reminder.findUnique({ where })
     if (reminder.userId !== userId) return
+
+    // Prisma doesn't support cascading deletes so we'll delete messages manually
+    try {
+      await this.db.message.deleteMany({
+        where: {
+          reminderId: reminder.id,
+        },
+      })
+    } catch (e) {
+      this.logger.error(
+        `Failed to delete messages for reminder ${reminder.id} `
+      )
+    }
+
     this.logger.log(`Removing reminder ${reminder.id}`)
+
     return this.db.reminder.delete({
       where: {
         id: where.id,
