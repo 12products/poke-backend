@@ -85,11 +85,13 @@ export class MessageService {
   }
 
   async receiveMessage(req) {
-    this.logger.log(`Received message from user ${JSON.stringify(req)}`)
+    this.logger.log(`Received message from user: ${req.body.Body}`)
+
     let pokeResponse = `We'll give you another poke in a bit!`
+
     const userResponse = req.body.Body.trim()
     const user = await this.db.user.findUnique({
-      where: { phone: req.body.From },
+      where: { phone: req.body.From.replace('+', '') },
       include: {
         reminders: true,
       },
@@ -102,9 +104,10 @@ export class MessageService {
         break
       }
     }
-    this.logger.log(
-      `Received message from outside for user ${user.name}, pokeResponse is ${pokeResponse}`
-    )
+
+    this.logger.log(`Received message from user ${user.id}`)
+    this.logger.log(`Responding with: ${pokeResponse}`)
+
     return await this.twilio.respondToMessage(pokeResponse)
   }
 
