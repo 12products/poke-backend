@@ -8,7 +8,6 @@ import { UsersService } from '../users/users.service'
 @Injectable()
 export class SubscriptionsService {
   private appleSharedSecret: string
-  private appleEnvironment: string
 
   constructor(
     private readonly configService: ConfigService,
@@ -17,13 +16,12 @@ export class SubscriptionsService {
     this.appleSharedSecret = this.configService.get<string>(
       'APPLE_SHARED_SECRET'
     )
-    this.appleEnvironment = this.configService.get<string>('APPLE_ENVIRONMENT')
   }
 
   async create(user: AuthUser, receipt: string) {
     appleReceiptVerify.config({
       secret: this.appleSharedSecret,
-      environment: [this.appleEnvironment || 'sandbox'],
+      environment: ['production', 'sandbox'],
     })
 
     try {
