@@ -8,6 +8,11 @@ import { DatabaseService } from '../database/database.service'
 import { emojis } from '../constants'
 import { getNotificationTime } from '../utils'
 
+const getNextIndex = (reminders: Reminder[]): number => {
+  const lastEmoji = reminders[reminders.length - 1].emoji
+  const lastEmojiIndex = emojis.indexOf(lastEmoji)
+  return lastEmojiIndex < 0 ? 0 : (lastEmojiIndex + 1) % emojis.length
+}
 @Injectable()
 export class RemindersService {
   private readonly logger = new Logger(RemindersService.name)
@@ -18,21 +23,19 @@ export class RemindersService {
   ) {}
 
   async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
-    const reminderCount = await this.db.reminder.count({
-      where: {
-        user: { id: user.id },
-      },
-    })
+    const currentReminders = await this.findAll(user.id)
 
     const currentUser: User = await this.db.user.findUnique({
       where: { id: user.id },
     })
 
-    if (!currentUser.activeSubscription && reminderCount) {
+    if (!currentUser.activeSubscription && currentReminders.length) {
       throw new Error('Need an active subscription for more reminders')
     }
 
-    const idx = reminderCount % emojis.length
+    const idx = currentReminders.length
+      ? getNextIndex(currentReminders)
+      : (Math.random() * emojis.length) | 0
     this.logger.log(
       `Creating reminder...${
         data.notificationTime
