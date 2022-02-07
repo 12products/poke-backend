@@ -37,6 +37,7 @@ export class RemindersService {
     const idx = currentReminders.length
       ? getNextIndex(currentReminders)
       : (Math.random() * emojis.length) | 0
+      
     this.logger.log(
       `Creating reminder...${
         data.notificationTime
