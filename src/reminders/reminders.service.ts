@@ -13,6 +13,7 @@ const getNextIndex = (reminders: Reminder[]): number => {
   const lastEmojiIndex = emojis.indexOf(lastEmoji)
   return lastEmojiIndex < 0 ? 0 : (lastEmojiIndex + 1) % emojis.length
 }
+
 @Injectable()
 export class RemindersService {
   private readonly logger = new Logger(RemindersService.name)
