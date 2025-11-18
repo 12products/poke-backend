@@ -10,6 +10,7 @@ import { MessageModule } from './message/message.module'
 import { TwilioModule } from './twilio/twilio.module'
 import { AuthModule } from './auth/auth.module'
 import { SubscriptionsModule } from './subscriptions/subscriptions.module'
+import { DemoModule } from './demo/demo.module'
 import { PokeAuthGuard } from './auth/auth.guard'
 
 @Module({
@@ -22,6 +23,7 @@ import { PokeAuthGuard } from './auth/auth.guard'
     TwilioModule,
     AuthModule,
     SubscriptionsModule,
+    DemoModule,
   ],
   controllers: [AppController],
   providers: [
