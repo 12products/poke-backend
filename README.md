@@ -16,3 +16,8 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 
 - User can see dashboard summarizing their reminders
 - User can see data visualization of their streaks
+
+---
+
+**Why did the accountability app go to therapy?**
+Because it had too many issues to *poke* at! 😄
