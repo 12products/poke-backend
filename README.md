@@ -16,3 +16,34 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 
 - User can see dashboard summarizing their reminders
 - User can see data visualization of their streaks
+
+## Math & Metrics
+
+### Success Rate
+The success rate for a given reminder is calculated as:
+
+```
+Success Rate = (Completed Reminders / Total Reminders Sent) × 100%
+```
+
+### Streak Calculation
+A streak is maintained when goals are completed consecutively:
+
+```
+Current Streak = ∑(consecutive completions)
+Max Streak = max(all streak sequences)
+```
+
+### Weekly Goal Progress
+For goals with weekly targets (e.g., gym 3 days per week):
+
+```
+Weekly Progress = (Days Completed This Week / Target Days) × 100%
+```
+
+### Expected Annual Completions
+Given a reminder frequency f (reminders per week) and success rate s:
+
+```
+Annual Completions ≈ f × s × 52 weeks
+```
