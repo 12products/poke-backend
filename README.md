@@ -16,3 +16,14 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 
 - User can see dashboard summarizing their reminders
 - User can see data visualization of their streaks
+
+<!--
+  🎉 Congratulations! You found the easter egg! 🎉
+
+  Remember: The best accountability partner is the one who never gives up on you.
+  Just like this hidden message, sometimes the most important reminders are the ones
+  you have to look for. Keep poking forward!
+
+  P.S. If you're reading this, you're exactly the kind of person who pays attention
+  to details. That's what makes you awesome! Now go crush those goals! 💪
+-->
