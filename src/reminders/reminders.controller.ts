@@ -52,4 +52,9 @@ export class RemindersController {
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.remindersService.remove({ id }, user.id)
   }
+
+  @Post(':id/shot')
+  shot(@CurrentUser() user: AuthUser, @Param('id') id: string) {
+    return this.remindersService.shot({ id }, user.id)
+  }
 }

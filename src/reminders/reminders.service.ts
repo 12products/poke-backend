@@ -120,6 +120,20 @@ export class RemindersService {
     })
   }
 
+  async shot(
+    where: Prisma.ReminderWhereUniqueInput,
+    userId: string
+  ): Promise<any> {
+    const reminder = await this.db.reminder.findUnique({ where })
+    if (!reminder || reminder.userId !== userId) {
+      throw new Error('Reminder not found or unauthorized')
+    }
+
+    this.logger.log(`Sending immediate shot for reminder ${reminder.id}`)
+
+    return await this.messageService.sendMessage(reminder.id)
+  }
+
   @Cron(CronExpression.EVERY_5_MINUTES)
   async sendReminders() {
     const now = new Date()
