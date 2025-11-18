@@ -16,3 +16,11 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 
 - User can see dashboard summarizing their reminders
 - User can see data visualization of their streaks
+
+---
+
+## Dad Joke of the Day
+
+Why don't programmers like nature?
+
+Because it has too many bugs! 🐛
