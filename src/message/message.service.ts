@@ -101,6 +101,51 @@ export class MessageService {
       return
     }
 
+    // Easter egg responses for secret messages!
+    const lowerResponse = userResponse.toLowerCase()
+
+    if (userResponse === '🦄' || lowerResponse.includes('unicorn')) {
+      this.logger.log('🦄 Easter egg triggered!')
+      return await this.twilio.respondToMessage(
+        '🦄✨ You found a unicorn! May your day be filled with magic and sparkles! ✨'
+      )
+    }
+
+    if (userResponse === '🚀' || lowerResponse.includes('rocket') || lowerResponse.includes('to the moon')) {
+      this.logger.log('🚀 Easter egg triggered!')
+      return await this.twilio.respondToMessage(
+        '🚀 To the moon! You\'re on a trajectory to greatness. Keep reaching for the stars! 🌟'
+      )
+    }
+
+    if (userResponse === '🎉' || lowerResponse === 'party') {
+      this.logger.log('🎉 Easter egg triggered!')
+      return await this.twilio.respondToMessage(
+        '🎉🎊 PARTY TIME! You deserve to celebrate! Keep being awesome! 🥳'
+      )
+    }
+
+    if (userResponse === '🐉' || lowerResponse.includes('dragon')) {
+      this.logger.log('🐉 Easter egg triggered!')
+      return await this.twilio.respondToMessage(
+        '🐉 You\'ve awakened the dragon! Legendary status unlocked. You\'re unstoppable! 🔥'
+      )
+    }
+
+    if (lowerResponse === 'konami' || lowerResponse === 'up up down down') {
+      this.logger.log('🎮 Konami code easter egg triggered!')
+      return await this.twilio.respondToMessage(
+        '🎮 ↑↑↓↓←→←→ KONAMI CODE ACTIVATED! You just unlocked 30 extra lives of motivation! 💪'
+      )
+    }
+
+    if (lowerResponse === '42' || lowerResponse === 'forty two') {
+      this.logger.log('42 easter egg triggered!')
+      return await this.twilio.respondToMessage(
+        '42 - The Answer to Life, the Universe, and Everything. You\'ve found the ultimate truth! 🌌'
+      )
+    }
+
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
         this.remove({ reminderId: reminder.id })
