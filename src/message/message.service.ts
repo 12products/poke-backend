@@ -101,10 +101,52 @@ export class MessageService {
       return
     }
 
+    // 🎮 Easter Egg: Konami Code via SMS
+    if (userResponse.toLowerCase().includes('konami') ||
+        userResponse.includes('up up down down')) {
+      pokeResponse = '🎮 KONAMI CODE ACTIVATED! You are a true gamer! Visit /konami for your reward!'
+      this.logger.log('🎮 Easter egg triggered: Konami Code')
+      return await this.twilio.respondToMessage(pokeResponse)
+    }
+
+    // 🌈 Easter Egg: All Emoji Sequence (Ultimate Achievement)
+    const allEmojisSequence = '🦄🥰🍔🙉🍎😇🦊🍉🤩🦁😜'
+    if (userResponse === allEmojisSequence) {
+      pokeResponse = '🌈✨ ULTIMATE ACHIEVEMENT UNLOCKED! ✨🌈\n\nYou texted all 11 emojis in perfect sequence! You are now a LEGENDARY Poke Master! 🏆\n\nAccountability Level: MAXIMUM'
+      this.logger.log('🌈 Easter egg triggered: All Emojis Sequence')
+      return await this.twilio.respondToMessage(pokeResponse)
+    }
+
+    // 🧘 Easter Egg: Zen Mode
+    if (userResponse.toLowerCase().includes('namaste') ||
+        userResponse.toLowerCase().includes('breathe') ||
+        userResponse.includes('🧘')) {
+      pokeResponse = '🧘‍♀️ Zen mode activated. Take a deep breath. You got this. Namaste. 🙏'
+      this.logger.log('🧘 Easter egg triggered: Zen Mode')
+      return await this.twilio.respondToMessage(pokeResponse)
+    }
+
+    // 🎯 Easter Egg: Secret codes
+    if (userResponse === '42') {
+      pokeResponse = '🌌 The answer to life, the universe, and everything. Don\'t forget your towel!'
+      this.logger.log('🎯 Easter egg triggered: 42')
+      return await this.twilio.respondToMessage(pokeResponse)
+    }
+
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
         this.remove({ reminderId: reminder.id })
-        pokeResponse = 'Great work!'
+
+        // Add variety to success messages
+        const successMessages = [
+          'Great work!',
+          'Crushing it! 💪',
+          'You\'re on fire! 🔥',
+          'Keep it up!',
+          'Legendary! 🏆',
+          'Absolutely smashing it!',
+        ]
+        pokeResponse = successMessages[Math.floor(Math.random() * successMessages.length)]
         break
       }
     }
