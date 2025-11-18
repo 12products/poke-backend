@@ -1,18 +1,20 @@
 # Poke
 
-Poke is a personal accountability system. You setup recurring goals on the platform and get reminded about them via text message. For example, if you want to go to the gym three days a week, you can add a reminder in Poke to message you on your gym days. Poke will keep track of when you accomplish your goals or when you've slipped up.
+Hark! What manner of wondrous contrivance be this Poke?
 
-## MVP
+'Tis a most ingenious engine of personal accountability, wherein a gentleman or gentlewoman may establish recurring pledges upon yon platform, and receive timely remembrance thereof by means of textual missive. Shouldst thou desire to attend the gymnasium thrice within the seven-day, thou mayst add such reminder unto Poke, which shall dispatch messages upon thy appointed days of bodily exercise. Verily, Poke shall maintain a faithful chronicle of thy accomplishments and thy lapses most unfortunate.
 
-- User can create reminders that will be regularly sent as text
-- User can set which days reminders are sent
-- User can set which times reminders are sent
-- User can respond to text to confirm completion
-- User can response to text to disable reminders (”snooze”)
-- User gets reminded if they do not respond to text
-- User can manage their reminders
+## The Minimum Viable Production (or, The First Act)
 
-## Stretch
+- The User may fashion reminders that shall be dispatched regularly as textual correspondence
+- The User may decree upon which days such reminders art to be sent
+- The User may establish at what hour these reminders shall arrive
+- The User may respond to said text to confirm completion of the task
+- The User may respond to text to silence reminders temporarily ("to snooze," as 't were)
+- The User shall receive further prompting if no response be given
+- The User may govern and administer their reminders with ease
 
-- User can see dashboard summarizing their reminders
-- User can see data visualization of their streaks
+## The Stretch Goals (or, What Dreams May Come)
+
+- The User may behold a dashboard that doth summarize their reminders most fair
+- The User may witness data visualization of their streaks, rendered in graphical splendor
