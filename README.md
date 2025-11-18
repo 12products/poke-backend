@@ -16,3 +16,15 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 
 - User can see dashboard summarizing their reminders
 - User can see data visualization of their streaks
+
+<!--
+🎉 Congratulations! You found the easter egg! 🥚
+You're the kind of person who reads the source code.
+We like you already. Keep poking around! 👀
+Fun fact: The word "poke" appears in this README exactly 7 times.
+Well, 8 times now. Okay, 9.
+-->
+
+---
+
+<sub>*Made with ☕ and 💪 by people who also need to be poked sometimes*</sub>
