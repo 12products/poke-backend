@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Reminder" ALTER COLUMN "text" SET DATA TYPE TEXT;

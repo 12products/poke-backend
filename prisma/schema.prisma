@@ -9,7 +9,7 @@ datasource db {
 
 model Reminder {
   id               String   @id @default(uuid())
-  text             String
+  text             String   @db.Text
   notificationTime DateTime @db.Timestamptz(6)
   // 0 indexed; 0 = Sunday, 6 = Saturday, etc.
   notificationDays Int[]
