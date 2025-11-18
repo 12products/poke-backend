@@ -16,3 +16,9 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 
 - User can see dashboard summarizing their reminders
 - User can see data visualization of their streaks
+
+---
+
+## Why did the programmer quit their gym membership?
+
+Because they preferred to work out their bugs instead of their muscles! 💪🐛
