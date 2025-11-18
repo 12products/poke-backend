@@ -6,6 +6,19 @@ import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
 import { getNotificationTime, getNextSendTime } from '../utils'
 
+const successMessages = [
+  'Amazing work! Keep it up!',
+  'You\'re crushing it!',
+  'Great work! You\'re building incredible habits!',
+  'Fantastic! Your consistency is inspiring!',
+  'You did it! So proud of you!',
+  'Stellar work! You\'re unstoppable!',
+  'Yes! Another win for you!',
+  'Awesome! You showed up today!',
+  'Brilliant! You\'re making it happen!',
+  'Outstanding effort! Keep going strong!',
+]
+
 @Injectable()
 export class MessageService {
   private readonly logger = new Logger(MessageService.name)
@@ -104,7 +117,8 @@ export class MessageService {
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
         this.remove({ reminderId: reminder.id })
-        pokeResponse = 'Great work!'
+        const randomIndex = Math.floor(Math.random() * successMessages.length)
+        pokeResponse = successMessages[randomIndex]
         break
       }
     }
