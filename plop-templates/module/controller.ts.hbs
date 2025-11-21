@@ -1,0 +1,59 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common'
+{{#if withAuth}}
+import { AuthUser } from '@supabase/supabase-js'
+
+import { CurrentUser } from '../auth/current-user.decorator'
+{{/if}}
+import { {{pascalCase name}}Service } from './{{name}}.service'
+import { Prisma } from '@prisma/client'
+
+@Controller('{{name}}')
+export class {{pascalCase name}}Controller {
+  constructor(private readonly {{camelCase name}}Service: {{pascalCase name}}Service) {}
+{{#if withCrud}}
+
+  @Get()
+  findAll({{#if withAuth}}@CurrentUser() user: AuthUser{{/if}}) {
+    return this.{{camelCase name}}Service.findAll({{#if withAuth}}user.id{{/if}})
+  }
+
+  @Get(':id')
+  findOne({{#if withAuth}}@CurrentUser() user: AuthUser, {{/if}}@Param('id') id: string) {
+    return this.{{camelCase name}}Service.findOne({ id }{{#if withAuth}}, user.id{{/if}})
+  }
+
+  @Post()
+  create(
+    @Body() data: Prisma.{{prismaModel}}CreateInput{{#if withAuth}},
+    @CurrentUser() user: AuthUser{{/if}}
+  ) {
+    return this.{{camelCase name}}Service.create({{#if withAuth}}user, {{/if}}data)
+  }
+
+  @Patch(':id')
+  update(
+    {{#if withAuth}}@CurrentUser() user: AuthUser,
+    {{/if}}@Param('id') id: string,
+    @Body() data: Prisma.{{prismaModel}}UpdateInput
+  ) {
+    return this.{{camelCase name}}Service.update({
+      where: { id },
+      data,
+      {{#if withAuth}}userId: user.id,{{/if}}
+    })
+  }
+
+  @Delete(':id')
+  remove({{#if withAuth}}@CurrentUser() user: AuthUser, {{/if}}@Param('id') id: string) {
+    return this.{{camelCase name}}Service.remove({ id }{{#if withAuth}}, user.id{{/if}})
+  }
+{{/if}}
+}

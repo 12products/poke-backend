@@ -1,0 +1,16 @@
+import { Controller, Get } from '@nestjs/common'
+
+import { Public } from '../auth/public.decorator'
+
+@Controller('{{route}}')
+export class {{pascalCase name}}Controller {
+  constructor() {}
+
+  @Public()
+  @Get()
+  index() {
+    return { status: 'ok' }
+  }
+
+  // Add your controller methods here
+}

@@ -1,0 +1,8 @@
+import { Module } from '@nestjs/common'
+import { {{pascalCase name}}Service } from './{{name}}.service'
+
+@Module({
+  providers: [{{pascalCase name}}Service],
+  exports: [{{pascalCase name}}Service],
+})
+export class {{pascalCase name}}Module {}

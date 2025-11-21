@@ -1,0 +1,73 @@
+import { Injectable, Logger } from '@nestjs/common'
+
+import { {{prismaModel}}, Prisma } from '@prisma/client'
+import { DatabaseService } from '../database/database.service'
+
+@Injectable()
+export class {{pascalCase name}}Service {
+  private readonly logger = new Logger({{pascalCase name}}Service.name)
+
+  constructor(private readonly db: DatabaseService) {}
+{{#if withCrud}}
+
+  async create({{#if withAuth}}user, {{/if}}data: Prisma.{{prismaModel}}CreateInput): Promise<{{prismaModel}}> {
+    this.logger.log(`Creating {{camelCase name}}...`)
+
+    return this.db.{{camelCase prismaModel}}.create({
+      data: {
+        ...data,
+        {{#if withAuth}}user: {
+          connect: { id: user.id },
+        },{{/if}}
+      },
+    })
+  }
+
+  async findAll({{#if withAuth}}userId: string{{/if}}): Promise<{{prismaModel}}[]> {
+    return this.db.{{camelCase prismaModel}}.findMany({{#if withAuth}}{
+      where: {
+        userId,
+      },
+    }{{/if}})
+  }
+
+  async findOne(
+    where: Prisma.{{prismaModel}}WhereUniqueInput{{#if withAuth}},
+    userId: string{{/if}}
+  ): Promise<{{prismaModel}} | null> {
+    const item = await this.db.{{camelCase prismaModel}}.findUnique({ where })
+    {{#if withAuth}}return item?.userId === userId ? item : null{{else}}return item{{/if}}
+  }
+
+  async update({
+    where,
+    data,
+    {{#if withAuth}}userId,{{/if}}
+  }: {
+    where: Prisma.{{prismaModel}}WhereUniqueInput
+    data: Prisma.{{prismaModel}}UpdateInput
+    {{#if withAuth}}userId: string{{/if}}
+  }): Promise<{{prismaModel}}> {
+    {{#if withAuth}}const item = await this.db.{{camelCase prismaModel}}.findUnique({ where })
+    if (item?.userId !== userId) return
+    {{/if}}this.logger.log(`Updating {{camelCase name}} ${where.id}`)
+    return this.db.{{camelCase prismaModel}}.update({ where, data })
+  }
+
+  async remove(
+    where: Prisma.{{prismaModel}}WhereUniqueInput{{#if withAuth}},
+    userId: string{{/if}}
+  ): Promise<{{prismaModel}}> {
+    {{#if withAuth}}const item = await this.db.{{camelCase prismaModel}}.findUnique({ where })
+    if (item?.userId !== userId) return
+
+    {{/if}}this.logger.log(`Removing {{camelCase name}} ${where.id}`)
+
+    return this.db.{{camelCase prismaModel}}.delete({
+      where: {
+        id: where.id,
+      },
+    })
+  }
+{{/if}}
+}
