@@ -41,3 +41,16 @@ model Message {
   tries      Int      @default(1)
   active     Boolean  @default(false)
 }
+
+model Plan {
+  id           String   @id @default(uuid())
+  name         String   @unique
+  displayName  String
+  price        Float    @default(0)
+  interval     String   @default("month")
+  maxReminders Int      @default(1)
+  features     String[]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime @updatedAt
+}
