@@ -24,11 +24,12 @@ export class RemindersService {
   ) {}
 
   async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
-    const currentReminders = await this.findAll(user.id)
-
-    const currentUser: User = await this.db.user.findUnique({
+    const currentUser = await this.db.user.findUnique({
       where: { id: user.id },
+      include: { reminders: true },
     })
+
+    const currentReminders = currentUser.reminders
 
     if (!currentUser.activeSubscription && currentReminders.length) {
       throw new Error('Need an active subscription for more reminders')
@@ -137,13 +138,15 @@ export class RemindersService {
 
     this.logger.log(`Found ${remindersToSend.length} reminders to send`)
 
-    remindersToSend.forEach((reminder) => {
-      this.logger.log(
-        `Sending reminder to ${reminder.emoji} ${
-          reminder.id
-        } at time ${getNotificationTime(now)}`
-      )
-      this.messageService.create(reminder.id)
-    })
+    await Promise.all(
+      remindersToSend.map((reminder) => {
+        this.logger.log(
+          `Sending reminder to ${reminder.emoji} ${
+            reminder.id
+          } at time ${getNotificationTime(now)}`
+        )
+        return this.messageService.create(reminder.id)
+      })
+    )
   }
 }

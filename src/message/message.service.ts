@@ -16,24 +16,23 @@ export class MessageService {
   ) {}
 
   async create(reminderId: string): Promise<Message> {
-    // //if message still exists, remove before creating new one
-    const hasMessage: Message | null = await this.findOne({ reminderId })
-
-    if (hasMessage) {
-      await this.remove({ reminderId })
-    }
-
     const nextSend = getNextSendTime(new Date(), 1)
     this.logger.log(
       `Creating message for reminder ${reminderId}, next send time ${nextSend}`
     )
-    const message = await this.db.message.create({
-      data: {
+    const message = await this.db.message.upsert({
+      where: { reminderId },
+      create: {
         reminder: {
           connect: { id: reminderId },
         },
         nextSend,
         active: true,
+      },
+      update: {
+        nextSend,
+        active: true,
+        tries: 0,
       },
     })
 
@@ -90,26 +89,24 @@ export class MessageService {
     let pokeResponse = `We'll give you another poke in a bit!`
 
     const userResponse = req.body.Body.trim()
-    const user = await this.db.user.findUnique({
-      where: { phone: req.body.From.replace('+', '') },
-      include: {
-        reminders: true,
+    const phone = req.body.From.replace('+', '')
+
+    const reminder = await this.db.reminder.findFirst({
+      where: {
+        emoji: userResponse,
+        user: { phone },
       },
+      include: { user: true },
     })
 
-    if (!user) {
-      return
+    if (!reminder) {
+      return await this.twilio.respondToMessage(pokeResponse)
     }
 
-    for (const reminder of user.reminders) {
-      if (reminder.emoji === userResponse) {
-        this.remove({ reminderId: reminder.id })
-        pokeResponse = 'Great work!'
-        break
-      }
-    }
+    this.remove({ reminderId: reminder.id })
+    pokeResponse = 'Great work!'
 
-    this.logger.log(`Received message from user ${user.id}`)
+    this.logger.log(`Received message from user ${reminder.user.id}`)
     this.logger.log(`Responding with: ${pokeResponse}`)
 
     return await this.twilio.respondToMessage(pokeResponse)
@@ -139,21 +136,23 @@ export class MessageService {
 
     this.logger.log(`Found ${allMessages.length} messages to send`)
 
-    allMessages.forEach(async (message) => {
-      await this.sendMessage(message.reminder.id)
-      const nextSend = getNextSendTime(new Date(), message.tries)
-      const active = message.tries < 4
+    await Promise.all(
+      allMessages.map(async (message) => {
+        await this.sendMessage(message.reminder.id)
+        const nextSend = getNextSendTime(new Date(), message.tries)
+        const active = message.tries < 4
 
-      this.logger.log(
-        `Resending message ${message.id} with tries ${
-          message.tries
-        }that matches nextSend of ${getNotificationTime(new Date())} `
-      )
+        this.logger.log(
+          `Resending message ${message.id} with tries ${
+            message.tries
+          } that matches nextSend of ${getNotificationTime(new Date())} `
+        )
 
-      await this.update({
-        where: { id: message.id },
-        data: { nextSend, tries: message.tries + 1, active },
+        await this.update({
+          where: { id: message.id },
+          data: { nextSend, tries: message.tries + 1, active },
+        })
       })
-    })
+    )
   }
 }
