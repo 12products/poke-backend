@@ -25,8 +25,10 @@ export class SubscriptionsService {
     })
 
     try {
-      const products = await appleReceiptVerify.validate({ receipt })
-      const uniqueTransactions = [
+      const products = (await appleReceiptVerify.validate({ receipt })) as Array<{
+        productId: string
+      }>
+      const uniqueTransactions: string[] = [
         ...new Set(products.map((product) => product.productId)),
       ]
 

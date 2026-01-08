@@ -139,7 +139,7 @@ export class MessageService {
 
     this.logger.log(`Found ${allMessages.length} messages to send`)
 
-    allMessages.forEach(async (message) => {
+    for (const message of allMessages) {
       await this.sendMessage(message.reminder.id)
       const nextSend = getNextSendTime(new Date(), message.tries)
       const active = message.tries < 4
@@ -147,13 +147,13 @@ export class MessageService {
       this.logger.log(
         `Resending message ${message.id} with tries ${
           message.tries
-        }that matches nextSend of ${getNotificationTime(new Date())} `
+        } that matches nextSend of ${getNotificationTime(new Date())} `
       )
 
       await this.update({
         where: { id: message.id },
         data: { nextSend, tries: message.tries + 1, active },
       })
-    })
+    }
   }
 }
