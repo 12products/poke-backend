@@ -11,9 +11,9 @@ async function bootstrap() {
     AppModule,
     new FastifyAdapter()
   )
-  // Todo: need to update origin once we deploy
+  const corsOrigin = process.env.CORS_ORIGIN || '*'
   app.enableCors({
-    origin: '*',
+    origin: corsOrigin,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   })
 

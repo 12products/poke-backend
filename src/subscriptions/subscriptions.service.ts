@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common'
 import { AuthUser } from '@supabase/supabase-js'
 import { ConfigService } from '@nestjs/config'
 import * as appleReceiptVerify from 'node-apple-receipt-verify'
@@ -37,7 +37,7 @@ export class SubscriptionsService {
         })
       }
     } catch (e) {
-      throw new Error(`Failed to verify Apple receipt: ${e}`)
+      throw new BadRequestException(`Failed to verify Apple receipt: ${e}`)
     }
 
     return 'ok'
@@ -50,7 +50,7 @@ export class SubscriptionsService {
         data: { activeSubscription: null },
       })
     } catch (e) {
-      throw new Error(`Failed to cancel the subscription: ${e}`)
+      throw new InternalServerErrorException(`Failed to cancel the subscription: ${e}`)
     }
 
     return 'ok'

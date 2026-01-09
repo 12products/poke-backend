@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, ForbiddenException } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { utcToZonedTime } from 'date-fns-tz'
 
@@ -31,7 +31,7 @@ export class RemindersService {
     })
 
     if (!currentUser.activeSubscription && currentReminders.length) {
-      throw new Error('Need an active subscription for more reminders')
+      throw new ForbiddenException('Need an active subscription for more reminders')
     }
 
     const idx = currentReminders.length
@@ -84,7 +84,9 @@ export class RemindersService {
     userId: string
   }): Promise<Reminder> {
     const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
+    if (!reminder || reminder.userId !== userId) {
+      throw new ForbiddenException('Reminder not found or access denied')
+    }
     this.logger.log(
       `Updating reminder ${reminder.id} with ${JSON.stringify(data)}`
     )
@@ -96,7 +98,9 @@ export class RemindersService {
     userId: string
   ): Promise<Reminder> {
     const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
+    if (!reminder || reminder.userId !== userId) {
+      throw new ForbiddenException('Reminder not found or access denied')
+    }
 
     // Prisma doesn't support cascading deletes so we'll delete messages manually
     try {
