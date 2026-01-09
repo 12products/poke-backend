@@ -1,45 +1,103 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 
-import { Prisma, User } from '@prisma/client'
-import { DatabaseService } from '../database/database.service'
+import { Prisma, User } from '@prisma/client';
+import { DatabaseService } from '../database/database.service';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(private readonly db: DatabaseService) {}
 
   async onboard(data: Prisma.UserCreateInput): Promise<User> {
-    const user = await this.findOne({ id: data.id })
+    const existingUser = await this.findOne({ id: data.id });
 
-    if (user) {
-      return user
+    if (existingUser) {
+      this.logger.log(`User ${data.id} already exists, returning existing`);
+      return existingUser;
     }
 
-    return this.db.user.create({ data })
+    this.logger.log(`Creating new user ${data.id}`);
+    return this.create(data);
   }
 
-  create(data: Prisma.UserCreateInput): Promise<User> {
-    return this.db.user.create({ data })
+  async create(data: Prisma.UserCreateInput): Promise<User> {
+    this.logger.log(`Creating user with email: ${data.email}`);
+    return this.db.user.create({ data });
   }
 
-  findAll(): Promise<User[]> {
-    return this.db.user.findMany()
+  async findAll(): Promise<User[]> {
+    return this.db.user.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
-  findOne(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
-    return this.db.user.findUnique({ where })
+  async findOne(where: Prisma.UserWhereUniqueInput): Promise<User | null> {
+    return this.db.user.findUnique({ where });
   }
 
-  update({
+  async findOneOrThrow(where: Prisma.UserWhereUniqueInput): Promise<User> {
+    const user = await this.findOne(where);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return user;
+  }
+
+  async update({
     where,
     data,
   }: {
-    where: Prisma.UserWhereUniqueInput
-    data: Prisma.UserUpdateInput
+    where: Prisma.UserWhereUniqueInput;
+    data: Prisma.UserUpdateInput;
   }): Promise<User> {
-    return this.db.user.update({ where, data })
+    const user = await this.findOne(where);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    this.logger.log(`Updating user ${where.id}`);
+    return this.db.user.update({ where, data });
   }
 
-  remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
-    return this.db.user.delete({ where })
+  async remove(where: Prisma.UserWhereUniqueInput): Promise<User> {
+    const user = await this.findOne(where);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    this.logger.log(`Deleting user ${where.id}`);
+    return this.db.user.delete({ where });
+  }
+
+  async updateSubscription(
+    userId: string,
+    isActive: boolean
+  ): Promise<User> {
+    this.logger.log(
+      `Updating subscription for user ${userId}: active=${isActive}`
+    );
+    return this.db.user.update({
+      where: { id: userId },
+      data: { activeSubscription: isActive },
+    });
+  }
+
+  async getUserStats(userId: string): Promise<{
+    totalReminders: number;
+    activeReminders: number;
+    hasSubscription: boolean;
+  }> {
+    const user = await this.findOneOrThrow({ id: userId });
+
+    const reminders = await this.db.reminder.findMany({
+      where: { userId },
+    });
+
+    return {
+      totalReminders: reminders.length,
+      activeReminders: reminders.filter((r) => r.isActive !== false).length,
+      hasSubscription: user.activeSubscription || false,
+    };
   }
 }

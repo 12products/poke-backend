@@ -1,10 +1,10 @@
 {
   "name": "poke-backend",
-  "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "version": "2.0.0",
+  "description": "Personal accountability system with SMS reminders",
+  "author": "Poke Team",
   "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist && yarn prisma generate",
     "build": "nest build",
@@ -14,12 +14,15 @@
     "start:debug": "TZ=UTC nest start --debug --watch",
     "start:prod": "TZ=UTC node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint:check": "eslint \"{src,apps,libs,test}/**/*.ts\"",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "ping": "./ping.sh"
+    "db:migrate": "prisma migrate dev",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@nestjs/common": "^8.0.0",
@@ -40,8 +43,7 @@
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
-    "twilio": "^3.73.0",
-    "twilio-cli": "^2.36.1"
+    "twilio": "^3.73.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
@@ -86,5 +88,8 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
