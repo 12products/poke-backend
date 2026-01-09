@@ -1,4 +1,4 @@
-import { set, add } from 'date-fns'
+import { set, add, differenceInMinutes } from 'date-fns'
 
 /**
  *
@@ -23,4 +23,34 @@ export const getNotificationTime = (date: Date): Date => {
 
 export const getNextSendTime = (nextSendTime: Date, tries: number): Date => {
   return getNotificationTime(add(nextSendTime, { hours: tries }))
+}
+
+/**
+ * Formats minutes into a human readable string
+ * @param minutes : number of minutes
+ * @returns : formatted string like "2h 30m" or "45m"
+ */
+export const formatDuration = (minutes: number): string => {
+  if (minutes < 60) {
+    return `${minutes}m`
+  }
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = minutes % 60
+  if (remainingMinutes === 0) {
+    return `${hours}h`
+  }
+  return `${hours}h ${remainingMinutes}m`
+}
+
+/**
+ * Calculates how long ago a date was in a friendly format
+ * @param date : the date to compare
+ * @returns : formatted string like "5m ago" or "2h 30m ago"
+ */
+export const timeAgo = (date: Date): string => {
+  const minutes = differenceInMinutes(new Date(), date)
+  if (minutes < 1) {
+    return 'just now'
+  }
+  return `${formatDuration(minutes)} ago`
 }

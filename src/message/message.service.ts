@@ -5,6 +5,7 @@ import { Message, Prisma } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
 import { getNotificationTime, getNextSendTime } from '../utils'
+import { MAX_RETRIES } from '../constants'
 
 @Injectable()
 export class MessageService {
@@ -142,7 +143,7 @@ export class MessageService {
     allMessages.forEach(async (message) => {
       await this.sendMessage(message.reminder.id)
       const nextSend = getNextSendTime(new Date(), message.tries)
-      const active = message.tries < 4
+      const active = message.tries < MAX_RETRIES
 
       this.logger.log(
         `Resending message ${message.id} with tries ${
