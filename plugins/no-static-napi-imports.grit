@@ -1,0 +1,43 @@
+language js
+
+// Rule: no-static-napi-imports
+// Disallows static imports of NAPI (Node-API) modules.
+// NAPI modules should be dynamically imported to avoid bundling issues
+// and ensure proper native module loading.
+
+pattern no_static_napi_imports() {
+    or {
+        // Match ES module static imports with napi in the source
+        `import $_ from $source` where {
+            $source <: r"['\"].*napi.*['\"]"i
+        },
+        // Match namespace imports
+        `import * as $_ from $source` where {
+            $source <: r"['\"].*napi.*['\"]"i
+        },
+        // Match side-effect imports
+        `import $source` where {
+            $source <: r"['\"].*napi.*['\"]"i
+        },
+        // Match CommonJS require calls at top level
+        `const $_ = require($source)` where {
+            $source <: r"['\"].*napi.*['\"]"i
+        },
+        `let $_ = require($source)` where {
+            $source <: r"['\"].*napi.*['\"]"i
+        },
+        `var $_ = require($source)` where {
+            $source <: r"['\"].*napi.*['\"]"i
+        },
+        // Match .node file imports (native bindings)
+        `import $_ from $source` where {
+            $source <: r"['\"].*\.node['\"]"
+        },
+        `const $_ = require($source)` where {
+            $source <: r"['\"].*\.node['\"]"
+        }
+    }
+}
+
+// Export the pattern as a lint rule
+no_static_napi_imports()
