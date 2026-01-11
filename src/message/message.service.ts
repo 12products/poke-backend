@@ -87,32 +87,82 @@ export class MessageService {
   async receiveMessage(req) {
     this.logger.log(`Received message from user: ${req.body.Body}`)
 
-    let pokeResponse = `We'll give you another poke in a bit!`
-
     const userResponse = req.body.Body.trim()
+    const phoneNumber = req.body.From.replace('+', '')
+
     const user = await this.db.user.findUnique({
-      where: { phone: req.body.From.replace('+', '') },
+      where: { phone: phoneNumber },
       include: {
         reminders: true,
       },
     })
 
     if (!user) {
-      return
+      this.logger.warn(`Received message from unknown phone: ${phoneNumber.slice(-4)}`)
+      return await this.twilio.respondToMessage(
+        'Sorry, we could not find your account. Please sign up at poke.app'
+      )
     }
+
+    // Check for special commands
+    if (userResponse.toLowerCase() === 'stop') {
+      this.logger.log(`User ${user.id} requested to stop all reminders`)
+      return await this.twilio.respondToMessage(
+        'You have been unsubscribed. Reply START to resume.'
+      )
+    }
+
+    if (userResponse.toLowerCase() === 'status') {
+      const activeReminders = user.reminders.length
+      return await this.twilio.respondToMessage(
+        `You have ${activeReminders} active reminder${activeReminders !== 1 ? 's' : ''}.`
+      )
+    }
+
+    // Check for emoji response matching a reminder
+    let pokeResponse = `We'll give you another poke in a bit!`
+    let matched = false
 
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
-        this.remove({ reminderId: reminder.id })
-        pokeResponse = 'Great work!'
+        await this.remove({ reminderId: reminder.id })
+        pokeResponse = this.getSuccessMessage()
+        matched = true
+        this.logger.log(`User ${user.id} completed reminder: ${reminder.id}`)
         break
       }
     }
 
-    this.logger.log(`Received message from user ${user.id}`)
-    this.logger.log(`Responding with: ${pokeResponse}`)
+    if (!matched) {
+      this.logger.log(`No matching emoji found for user ${user.id}, response: ${userResponse}`)
+    }
 
+    this.logger.log(`Responding to user ${user.id}: ${pokeResponse}`)
     return await this.twilio.respondToMessage(pokeResponse)
+  }
+
+  private getSuccessMessage(): string {
+    const messages = [
+      'Great work! Keep it up!',
+      'Awesome job! You crushed it!',
+      'Nice! Another goal achieved!',
+      'Fantastic! You are on fire!',
+      'Well done! Consistency is key!',
+    ]
+    return messages[Math.floor(Math.random() * messages.length)]
+  }
+
+  async getMessageStats(): Promise<{ total: number; active: number; completed: number }> {
+    const [total, active] = await Promise.all([
+      this.db.message.count(),
+      this.db.message.count({ where: { active: true } }),
+    ])
+
+    return {
+      total,
+      active,
+      completed: total - active,
+    }
   }
 
   @Cron(CronExpression.EVERY_MINUTE)

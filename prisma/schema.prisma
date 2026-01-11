@@ -8,36 +8,90 @@ datasource db {
 }
 
 model Reminder {
-  id               String   @id @default(uuid())
+  id               String    @id @default(uuid())
   text             String
-  notificationTime DateTime @db.Timestamptz(6)
+  notificationTime DateTime  @db.Timestamptz(6)
   // 0 indexed; 0 = Sunday, 6 = Saturday, etc.
   notificationDays Int[]
-  user             User     @relation(fields: [userId], references: [id])
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId           String
   message          Message?
   emoji            String
-  color            String   @default("blue")
-  createdAt        DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt        DateTime @default(now()) @db.Timestamptz(6)
+  color            String    @default("blue")
+  createdAt        DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt        DateTime  @updatedAt @db.Timestamptz(6)
   timeZone         String
+  isActive         Boolean   @default(true)
+  streakCount      Int       @default(0)
+  lastCompletedAt  DateTime? @db.Timestamptz(6)
+  completions      Completion[]
+
+  @@index([userId])
+  @@index([notificationTime])
+  @@index([isActive])
 }
 
 model User {
   id                 String     @id @default(uuid())
   name               String?
+  email              String?    @unique
   phone              String     @unique
   onboarded          Boolean    @default(false)
   reminders          Reminder[]
   activeSubscription String?
+  createdAt          DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime   @updatedAt @db.Timestamptz(6)
+  lastActiveAt       DateTime?  @db.Timestamptz(6)
+  preferences        Json?
+  isActive           Boolean    @default(true)
+
+  @@index([phone])
+  @@index([email])
 }
 
 model Message {
   id         String   @id @default(uuid())
-  reminder   Reminder @relation(fields: [reminderId], references: [id])
+  reminder   Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
   reminderId String   @unique
   createdAt  DateTime @default(now()) @db.Timestamptz(6)
   nextSend   DateTime @default(now()) @db.Timestamptz(6)
   tries      Int      @default(1)
   active     Boolean  @default(false)
+  status     MessageStatus @default(PENDING)
+
+  @@index([nextSend])
+  @@index([active])
+}
+
+model Completion {
+  id         String   @id @default(uuid())
+  reminder   Reminder @relation(fields: [reminderId], references: [id], onDelete: Cascade)
+  reminderId String
+  completedAt DateTime @default(now()) @db.Timestamptz(6)
+  responseTime Int?    // Time in seconds from reminder sent to completion
+
+  @@index([reminderId])
+  @@index([completedAt])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  entityType String
+  entityId  String
+  userId    String?
+  metadata  Json?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  ACKNOWLEDGED
 }
