@@ -123,6 +123,7 @@ export class RemindersService {
   @Cron(CronExpression.EVERY_5_MINUTES)
   async sendReminders() {
     const now = new Date()
+    const startTime = Date.now()
 
     let remindersToSend = await this.db.reminder.findMany({
       where: {
@@ -130,20 +131,46 @@ export class RemindersService {
       },
     })
 
+    const totalReminders = remindersToSend.length
+
     remindersToSend = remindersToSend.filter((reminder) => {
       const userLocalNow = utcToZonedTime(now, reminder.timeZone)
       return reminder.notificationDays.includes(userLocalNow.getDay())
     })
 
-    this.logger.log(`Found ${remindersToSend.length} reminders to send`)
+    this.logger.log(
+      `Found ${remindersToSend.length}/${totalReminders} reminders to send (filtered by day)`
+    )
 
-    remindersToSend.forEach((reminder) => {
-      this.logger.log(
-        `Sending reminder to ${reminder.emoji} ${
-          reminder.id
-        } at time ${getNotificationTime(now)}`
-      )
-      this.messageService.create(reminder.id)
+    const results = await Promise.allSettled(
+      remindersToSend.map(async (reminder) => {
+        this.logger.log(
+          `Sending reminder to ${reminder.emoji} ${
+            reminder.id
+          } at time ${getNotificationTime(now)}`
+        )
+        return this.messageService.create(reminder.id)
+      })
+    )
+
+    const successful = results.filter((r) => r.status === 'fulfilled').length
+    const failed = results.filter((r) => r.status === 'rejected').length
+    const duration = Date.now() - startTime
+
+    this.logger.log(
+      `Reminder batch complete: ${successful} sent, ${failed} failed, took ${duration}ms`
+    )
+  }
+
+  async getActiveReminderCount(): Promise<number> {
+    return this.db.reminder.count()
+  }
+
+  async getRemindersByTimeZone(
+    timeZone: string
+  ): Promise<Reminder[]> {
+    return this.db.reminder.findMany({
+      where: { timeZone },
     })
   }
 }

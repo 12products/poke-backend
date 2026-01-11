@@ -1,4 +1,4 @@
-import { set, add } from 'date-fns'
+import { set, add, format, differenceInDays } from 'date-fns'
 
 /**
  *
@@ -13,6 +13,40 @@ export const getNotificationTime = (date: Date): Date => {
     seconds: 0,
     milliseconds: 0,
   })
+}
+
+/**
+ * Calculates the streak count for a user's reminders
+ * @param completedDates - Array of dates when reminders were completed
+ * @returns The current streak count
+ */
+export const calculateStreak = (completedDates: Date[]): number => {
+  if (completedDates.length === 0) return 0
+
+  const sortedDates = completedDates
+    .map(d => new Date(d))
+    .sort((a, b) => b.getTime() - a.getTime())
+
+  let streak = 1
+  for (let i = 0; i < sortedDates.length - 1; i++) {
+    const diff = differenceInDays(sortedDates[i], sortedDates[i + 1])
+    if (diff === 1) {
+      streak++
+    } else {
+      break
+    }
+  }
+
+  return streak
+}
+
+/**
+ * Formats a date for display in notifications
+ * @param date - The date to format
+ * @returns Formatted date string
+ */
+export const formatNotificationDate = (date: Date): string => {
+  return format(date, 'EEEE, MMMM do')
 }
 /**
  *
