@@ -53,3 +53,48 @@ export const isValidPhoneNumber = (phone: string): boolean => {
   const phoneRegex = /^\+?[1-9]\d{1,14}$/
   return phoneRegex.test(phone.replace(/[\s-()]/g, ''))
 }
+
+/**
+ * Normalizes a phone number to E.164 format
+ */
+export const normalizePhoneNumber = (phone: string): string => {
+  const cleaned = phone.replace(/[\s\-()]/g, '')
+  return cleaned.startsWith('+') ? cleaned : `+1${cleaned}`
+}
+
+/**
+ * Delays execution for a specified number of milliseconds
+ */
+export const sleep = (ms: number): Promise<void> => {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+/**
+ * Retries a function with exponential backoff
+ */
+export const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000
+): Promise<T> => {
+  let lastError: Error
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+      if (i < maxRetries - 1) {
+        await sleep(baseDelay * Math.pow(2, i))
+      }
+    }
+  }
+  throw lastError
+}
+
+/**
+ * Truncates a string to a maximum length
+ */
+export const truncate = (str: string, maxLength: number): string => {
+  if (str.length <= maxLength) return str
+  return str.substring(0, maxLength - 3) + '...'
+}
