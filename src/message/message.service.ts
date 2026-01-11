@@ -1,35 +1,19 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
 import { Message, Prisma } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
-import { getNotificationTime, getNextSendTime, generateTrackingId } from '../utils'
-import { motivationalMessages, RETRY_ATTEMPTS } from '../constants'
-
-const getRandomMotivation = (): string => {
-  return motivationalMessages[Math.floor(Math.random() * motivationalMessages.length)]
-}
+import { getNotificationTime, getNextSendTime } from '../utils'
 
 @Injectable()
 export class MessageService {
-  private readonly logger = new Logger(MessageService.name)
-  private messagesSentToday = 0
-
   constructor(
     private readonly db: DatabaseService,
     private twilio: TwilioService
   ) {}
 
-  getStats() {
-    return {
-      messagesSentToday: this.messagesSentToday,
-      lastReset: new Date().toISOString().split('T')[0],
-    }
-  }
-
   async create(reminderId: string): Promise<Message> {
-    // //if message still exists, remove before creating new one
     const hasMessage: Message | null = await this.findOne({ reminderId })
 
     if (hasMessage) {
@@ -37,9 +21,6 @@ export class MessageService {
     }
 
     const nextSend = getNextSendTime(new Date(), 1)
-    this.logger.log(
-      `Creating message for reminder ${reminderId}, next send time ${nextSend}`
-    )
     const message = await this.db.message.create({
       data: {
         reminder: {
@@ -80,9 +61,6 @@ export class MessageService {
   }
 
   async sendMessage(reminderId: string) {
-    const trackingId = generateTrackingId()
-    this.logger.log(`[${trackingId}] Preparing to send message for reminder ${reminderId}`)
-
     const reminder = await this.db.reminder.findUnique({
       where: { id: reminderId },
       include: {
@@ -91,38 +69,25 @@ export class MessageService {
     })
 
     if (!reminder || !reminder.user) {
-      this.logger.warn(`[${trackingId}] Reminder or user not found for ${reminderId}`)
       return null
     }
 
-    const motivation = getRandomMotivation()
-    const messageBody = `${reminder.text}.\n\n${motivation}\n\nRespond with ${reminder.emoji} to acknowledge this poke!`
-
-    const response = await this.twilio.sendMessage(messageBody, reminder.user.phone)
-
-    this.messagesSentToday++
-    this.logger.log(
-      `[${trackingId}] Message sent to ${reminderId}, response from twilio: ${response?.sid || 'unknown'}`
+    return await this.twilio.sendMessage(
+      `${reminder.text}. Respond with ${reminder.emoji} to acknowledge this poke!`,
+      reminder.user.phone
     )
-    return response
   }
 
   async receiveMessage(req) {
-    this.logger.log(`Received message from user: ${req.body.Body}`)
-
     let pokeResponse = `We'll give you another poke in a bit!`
 
     const userResponse = req.body.Body.trim()
     const user = await this.db.user.findUnique({
       where: { phone: req.body.From.replace('+', '') },
-      include: {
-        reminders: true,
-      },
+      include: { reminders: true },
     })
 
-    if (!user) {
-      return
-    }
+    if (!user) return
 
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
@@ -132,59 +97,29 @@ export class MessageService {
       }
     }
 
-    this.logger.log(`Received message from user ${user.id}`)
-    this.logger.log(`Responding with: ${pokeResponse}`)
-
     return await this.twilio.respondToMessage(pokeResponse)
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
   async resendMessage() {
-    // Finds all messages with nextSend time as now
     const allMessages = await this.db.message.findMany({
       where: {
         AND: [
-          {
-            nextSend: {
-              lte: getNotificationTime(new Date()),
-            },
-          },
-          {
-            active: true,
-          },
+          { nextSend: { lte: getNotificationTime(new Date()) } },
+          { active: true },
         ],
       },
-
-      include: {
-        reminder: true,
-      },
+      include: { reminder: true },
     })
 
-    this.logger.log(`Found ${allMessages.length} messages to send`)
-
     for (const message of allMessages) {
-      try {
-        await this.sendMessage(message.reminder.id)
-        const nextSend = getNextSendTime(new Date(), message.tries)
-        const active = message.tries < RETRY_ATTEMPTS
+      await this.sendMessage(message.reminder.id)
+      const nextSend = getNextSendTime(new Date(), message.tries)
 
-        this.logger.log(
-          `Resending message ${message.id} with tries ${message.tries} that matches nextSend of ${getNotificationTime(new Date())}`
-        )
-
-        await this.update({
-          where: { id: message.id },
-          data: { nextSend, tries: message.tries + 1, active },
-        })
-      } catch (error) {
-        this.logger.error(`Failed to resend message ${message.id}: ${error.message}`)
-      }
+      await this.update({
+        where: { id: message.id },
+        data: { nextSend, tries: message.tries + 1, active: message.tries < 3 },
+      })
     }
-  }
-
-  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
-  resetDailyStats() {
-    this.logger.log(`Resetting daily stats. Messages sent today: ${this.messagesSentToday}`)
-    this.messagesSentToday = 0
   }
 }
