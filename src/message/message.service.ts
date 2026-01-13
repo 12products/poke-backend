@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
-import { Message, Prisma } from '@prisma/client'
+import { Message, Prisma, Reminder } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
 import { getNotificationTime, getNextSendTime } from '../utils'
@@ -109,8 +109,9 @@ export class MessageService {
       }
     }
 
-    this.logger.log(`Received message from user ${user.id}`)
+    this.logger.log(`Received message from user ${user.id} with response: ${userResponse}`)
     this.logger.log(`Responding with: ${pokeResponse}`)
+    this.logger.debug(`User has ${user.reminders.length} active reminders`)
 
     return await this.twilio.respondToMessage(pokeResponse)
   }
@@ -154,6 +155,22 @@ export class MessageService {
         where: { id: message.id },
         data: { nextSend, tries: message.tries + 1, active },
       })
+
+      if (!active) {
+        this.logger.warn(`Message ${message.id} exceeded max retries, marking inactive`)
+      }
     })
+  }
+
+  /**
+   * Get statistics about message delivery
+   */
+  async getDeliveryStats(): Promise<{ total: number; active: number; delivered: number }> {
+    const messages = await this.findAll()
+    return {
+      total: messages.length,
+      active: messages.filter((m) => m.active).length,
+      delivered: messages.filter((m) => !m.active).length,
+    }
   }
 }
