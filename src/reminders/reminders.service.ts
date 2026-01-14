@@ -142,11 +142,6 @@ export class RemindersService {
 
     await Promise.all(
       remindersToSend.map(async (reminder) => {
-        this.logger.log(
-          `Sending reminder to ${reminder.emoji} ${
-            reminder.id
-          } at time ${getNotificationTime(now)}`
-        )
         await this.messageService.create(reminder.id)
       })
     )

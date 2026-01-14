@@ -16,7 +16,6 @@ export class MessageService {
   ) {}
 
   async create(reminderId: string): Promise<Message> {
-    // Delete existing message if any (upsert pattern)
     await this.db.message.deleteMany({
       where: { reminderId },
     })
