@@ -24,15 +24,16 @@ export class RemindersService {
   ) {}
 
   async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
-    const currentReminders = await this.findAll(user.id)
-
     const currentUser: User = await this.db.user.findUnique({
       where: { id: user.id },
+      include: { reminders: true },
     })
 
-    if (!currentUser.activeSubscription && currentReminders.length) {
+    if (!currentUser.activeSubscription && currentUser.reminders.length) {
       throw new Error('Need an active subscription for more reminders')
     }
+
+    const currentReminders = currentUser.reminders
 
     const idx = currentReminders.length
       ? getNextIndex(currentReminders)
@@ -83,39 +84,41 @@ export class RemindersService {
     data: Prisma.ReminderUpdateInput
     userId: string
   }): Promise<Reminder> {
-    const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
     this.logger.log(
-      `Updating reminder ${reminder.id} with ${JSON.stringify(data)}`
+      `Updating reminder ${where.id} with ${JSON.stringify(data)}`
     )
-    return this.db.reminder.update({ where, data })
+    return this.db.reminder.update({
+      where: {
+        id: where.id,
+        userId,
+      },
+      data,
+    })
   }
 
   async remove(
     where: Prisma.ReminderWhereUniqueInput,
     userId: string
   ): Promise<Reminder> {
-    const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
+    this.logger.log(`Removing reminder ${where.id}`)
 
     // Prisma doesn't support cascading deletes so we'll delete messages manually
     try {
       await this.db.message.deleteMany({
         where: {
-          reminderId: reminder.id,
+          reminderId: where.id,
         },
       })
     } catch (e) {
       this.logger.error(
-        `Failed to delete messages for reminder ${reminder.id} `
+        `Failed to delete messages for reminder ${where.id} `
       )
     }
-
-    this.logger.log(`Removing reminder ${reminder.id}`)
 
     return this.db.reminder.delete({
       where: {
         id: where.id,
+        userId,
       },
     })
   }
@@ -137,13 +140,15 @@ export class RemindersService {
 
     this.logger.log(`Found ${remindersToSend.length} reminders to send`)
 
-    remindersToSend.forEach((reminder) => {
-      this.logger.log(
-        `Sending reminder to ${reminder.emoji} ${
-          reminder.id
-        } at time ${getNotificationTime(now)}`
-      )
-      this.messageService.create(reminder.id)
-    })
+    await Promise.all(
+      remindersToSend.map(async (reminder) => {
+        this.logger.log(
+          `Sending reminder to ${reminder.emoji} ${
+            reminder.id
+          } at time ${getNotificationTime(now)}`
+        )
+        await this.messageService.create(reminder.id)
+      })
+    )
   }
 }

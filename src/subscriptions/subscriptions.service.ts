@@ -26,14 +26,11 @@ export class SubscriptionsService {
 
     try {
       const products = await appleReceiptVerify.validate({ receipt })
-      const uniqueTransactions = [
-        ...new Set(products.map((product) => product.productId)),
-      ]
 
-      if (uniqueTransactions.length) {
+      if (products.length > 0) {
         await this.users.update({
           where: { id: user.id },
-          data: { activeSubscription: uniqueTransactions[0] },
+          data: { activeSubscription: products[0].productId },
         })
       }
     } catch (e) {

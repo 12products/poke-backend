@@ -21,6 +21,9 @@ model Reminder {
   createdAt        DateTime @default(now()) @db.Timestamptz(6)
   updatedAt        DateTime @default(now()) @db.Timestamptz(6)
   timeZone         String
+
+  @@index([userId])
+  @@index([notificationTime])
 }
 
 model User {
@@ -40,4 +43,6 @@ model Message {
   nextSend   DateTime @default(now()) @db.Timestamptz(6)
   tries      Int      @default(1)
   active     Boolean  @default(false)
+
+  @@index([nextSend, active])
 }

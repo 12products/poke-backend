@@ -16,12 +16,10 @@ export class MessageService {
   ) {}
 
   async create(reminderId: string): Promise<Message> {
-    // //if message still exists, remove before creating new one
-    const hasMessage: Message | null = await this.findOne({ reminderId })
-
-    if (hasMessage) {
-      await this.remove({ reminderId })
-    }
+    // Delete existing message if any (upsert pattern)
+    await this.db.message.deleteMany({
+      where: { reminderId },
+    })
 
     const nextSend = getNextSendTime(new Date(), 1)
     this.logger.log(
@@ -103,7 +101,7 @@ export class MessageService {
 
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
-        this.remove({ reminderId: reminder.id })
+        await this.remove({ reminderId: reminder.id })
         pokeResponse = 'Great work!'
         break
       }
@@ -139,21 +137,23 @@ export class MessageService {
 
     this.logger.log(`Found ${allMessages.length} messages to send`)
 
-    allMessages.forEach(async (message) => {
-      await this.sendMessage(message.reminder.id)
-      const nextSend = getNextSendTime(new Date(), message.tries)
-      const active = message.tries < 4
+    await Promise.all(
+      allMessages.map(async (message) => {
+        await this.sendMessage(message.reminder.id)
+        const nextSend = getNextSendTime(new Date(), message.tries)
+        const active = message.tries < 4
 
-      this.logger.log(
-        `Resending message ${message.id} with tries ${
-          message.tries
-        }that matches nextSend of ${getNotificationTime(new Date())} `
-      )
+        this.logger.log(
+          `Resending message ${message.id} with tries ${
+            message.tries
+          }that matches nextSend of ${getNotificationTime(new Date())} `
+        )
 
-      await this.update({
-        where: { id: message.id },
-        data: { nextSend, tries: message.tries + 1, active },
+        await this.update({
+          where: { id: message.id },
+          data: { nextSend, tries: message.tries + 1, active },
+        })
       })
-    })
+    )
   }
 }
