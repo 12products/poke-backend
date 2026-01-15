@@ -1,3 +1,6 @@
+// How many programmers does it take to change a light bulb?
+// None, that's a hardware problem!
+
 import { Injectable } from '@nestjs/common'
 
 import { Prisma, User } from '@prisma/client'
