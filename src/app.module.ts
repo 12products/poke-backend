@@ -10,12 +10,17 @@ import { MessageModule } from './message/message.module'
 import { TwilioModule } from './twilio/twilio.module'
 import { AuthModule } from './auth/auth.module'
 import { SubscriptionsModule } from './subscriptions/subscriptions.module'
+import { DatabaseModule } from './database/database.module'
 import { PokeAuthGuard } from './auth/auth.guard'
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local', '.env'],
+    }),
     ScheduleModule.forRoot(),
+    DatabaseModule,
     RemindersModule,
     UsersModule,
     MessageModule,
