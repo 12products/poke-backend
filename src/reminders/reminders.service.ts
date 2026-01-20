@@ -1,17 +1,44 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException, ForbiddenException } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { utcToZonedTime } from 'date-fns-tz'
 
 import { Reminder, Prisma, User } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
-import { emojis } from '../constants'
-import { getNotificationTime } from '../utils'
+import {
+  emojis,
+  MAX_REMINDERS_FREE,
+  MAX_REMINDERS_PREMIUM,
+  SUBSCRIPTION_TIERS,
+} from '../constants'
+import { getNotificationTime, formatDateForLog, generateTrackingId } from '../utils'
 
-const getNextIndex = (reminders: Reminder[]): number => {
+export interface ReminderStats {
+  totalReminders: number
+  activeToday: number
+  completedToday: number
+  upcomingCount: number
+}
+
+export interface ReminderWithStatus extends Reminder {
+  isActiveToday: boolean
+  nextNotificationTime: Date | null
+}
+
+const getNextEmojiIndex = (reminders: Reminder[]): number => {
+  if (!reminders.length) {
+    return Math.floor(Math.random() * emojis.length)
+  }
   const lastEmoji = reminders[reminders.length - 1].emoji
   const lastEmojiIndex = emojis.indexOf(lastEmoji)
   return lastEmojiIndex < 0 ? 0 : (lastEmojiIndex + 1) % emojis.length
+}
+
+const getMaxReminders = (subscriptionTier: string | null): number => {
+  if (!subscriptionTier) return MAX_REMINDERS_FREE
+  if (subscriptionTier === SUBSCRIPTION_TIERS.ENTERPRISE) return Infinity
+  if (subscriptionTier === SUBSCRIPTION_TIERS.PREMIUM) return MAX_REMINDERS_PREMIUM
+  return MAX_REMINDERS_FREE
 }
 
 @Injectable()
@@ -23,46 +50,73 @@ export class RemindersService {
     private readonly messageService: MessageService
   ) {}
 
-  async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
-    const currentReminders = await this.findAll(user.id)
+  async create(user: { id: string }, data: Prisma.ReminderCreateInput): Promise<Reminder> {
+    const trackingId = generateTrackingId()
+    this.logger.log(`[${trackingId}] Creating reminder for user: ${user.id}`)
 
+    const currentReminders = await this.findAll(user.id)
     const currentUser: User = await this.db.user.findUnique({
       where: { id: user.id },
     })
 
-    if (!currentUser.activeSubscription && currentReminders.length) {
-      throw new Error('Need an active subscription for more reminders')
+    if (!currentUser) {
+      throw new NotFoundException('User not found')
     }
 
-    const idx = currentReminders.length
-      ? getNextIndex(currentReminders)
-      : (Math.random() * emojis.length) | 0
-      
+    const maxReminders = getMaxReminders(currentUser.activeSubscription)
+    if (currentReminders.length >= maxReminders) {
+      this.logger.warn(
+        `[${trackingId}] User ${user.id} reached reminder limit: ${currentReminders.length}/${maxReminders}`
+      )
+      throw new ForbiddenException(
+        `You have reached the maximum number of reminders (${maxReminders}). ` +
+          'Please upgrade your subscription or delete an existing reminder.'
+      )
+    }
+
+    const emojiIndex = getNextEmojiIndex(currentReminders)
+    const notificationTime = getNotificationTime(new Date(data.notificationTime))
+
     this.logger.log(
-      `Creating reminder...${
-        data.notificationTime
-      } stored as ${getNotificationTime(new Date(data.notificationTime))} , ${
-        data.notificationDays
-      }}`
+      `[${trackingId}] Creating reminder with notification time: ${formatDateForLog(notificationTime)}, ` +
+        `days: ${data.notificationDays}, emoji: ${emojis[emojiIndex]}`
     )
 
-    return this.db.reminder.create({
+    const reminder = await this.db.reminder.create({
       data: {
         ...data,
-        emoji: emojis[idx],
-        notificationTime: getNotificationTime(new Date(data.notificationTime)),
+        emoji: emojis[emojiIndex],
+        notificationTime,
         user: {
           connect: { id: user.id },
         },
       },
     })
+
+    this.logger.log(`[${trackingId}] Successfully created reminder: ${reminder.id}`)
+    return reminder
   }
 
   async findAll(userId: string): Promise<Reminder[]> {
     return this.db.reminder.findMany({
-      where: {
-        userId,
-      },
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    })
+  }
+
+  async findAllWithStatus(userId: string): Promise<ReminderWithStatus[]> {
+    const reminders = await this.findAll(userId)
+    const now = new Date()
+
+    return reminders.map((reminder) => {
+      const userLocalNow = utcToZonedTime(now, reminder.timeZone)
+      const isActiveToday = reminder.notificationDays.includes(userLocalNow.getDay())
+
+      return {
+        ...reminder,
+        isActiveToday,
+        nextNotificationTime: isActiveToday ? reminder.notificationTime : null,
+      }
     })
   }
 
@@ -71,7 +125,24 @@ export class RemindersService {
     userId: string
   ): Promise<Reminder | null> {
     const reminder = await this.db.reminder.findUnique({ where })
-    return reminder.userId === userId ? reminder : null
+    if (!reminder) {
+      return null
+    }
+    if (reminder.userId !== userId) {
+      throw new ForbiddenException('You do not have access to this reminder')
+    }
+    return reminder
+  }
+
+  async findOneOrFail(
+    where: Prisma.ReminderWhereUniqueInput,
+    userId: string
+  ): Promise<Reminder> {
+    const reminder = await this.findOne(where, userId)
+    if (!reminder) {
+      throw new NotFoundException('Reminder not found')
+    }
+    return reminder
   }
 
   async update({
@@ -83,67 +154,148 @@ export class RemindersService {
     data: Prisma.ReminderUpdateInput
     userId: string
   }): Promise<Reminder> {
-    const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
+    const trackingId = generateTrackingId()
+    const reminder = await this.findOneOrFail(where, userId)
+
     this.logger.log(
-      `Updating reminder ${reminder.id} with ${JSON.stringify(data)}`
+      `[${trackingId}] Updating reminder ${reminder.id} with: ${JSON.stringify(data)}`
     )
-    return this.db.reminder.update({ where, data })
+
+    if (data.notificationTime) {
+      data.notificationTime = getNotificationTime(new Date(data.notificationTime as string))
+    }
+
+    const updated = await this.db.reminder.update({ where, data })
+    this.logger.log(`[${trackingId}] Successfully updated reminder: ${reminder.id}`)
+    return updated
   }
 
   async remove(
     where: Prisma.ReminderWhereUniqueInput,
     userId: string
   ): Promise<Reminder> {
-    const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
+    const trackingId = generateTrackingId()
+    const reminder = await this.findOneOrFail(where, userId)
 
-    // Prisma doesn't support cascading deletes so we'll delete messages manually
+    this.logger.log(`[${trackingId}] Removing reminder: ${reminder.id}`)
+
     try {
       await this.db.message.deleteMany({
-        where: {
-          reminderId: reminder.id,
-        },
+        where: { reminderId: reminder.id },
       })
+      this.logger.debug(`[${trackingId}] Deleted associated messages for reminder: ${reminder.id}`)
     } catch (e) {
       this.logger.error(
-        `Failed to delete messages for reminder ${reminder.id} `
+        `[${trackingId}] Failed to delete messages for reminder ${reminder.id}: ${e.message}`
       )
     }
 
-    this.logger.log(`Removing reminder ${reminder.id}`)
+    const deleted = await this.db.reminder.delete({ where: { id: where.id } })
+    this.logger.log(`[${trackingId}] Successfully removed reminder: ${reminder.id}`)
+    return deleted
+  }
 
-    return this.db.reminder.delete({
+  async getStats(userId: string): Promise<ReminderStats> {
+    const reminders = await this.findAll(userId)
+    const now = new Date()
+    const todayStart = new Date(now)
+    todayStart.setHours(0, 0, 0, 0)
+
+    let activeToday = 0
+
+    for (const reminder of reminders) {
+      const userLocalNow = utcToZonedTime(now, reminder.timeZone)
+      if (reminder.notificationDays.includes(userLocalNow.getDay())) {
+        activeToday++
+      }
+    }
+
+    const completedMessages = await this.db.message.count({
       where: {
-        id: where.id,
+        reminder: { userId },
+        active: false,
+        updatedAt: { gte: todayStart },
       },
+    })
+
+    return {
+      totalReminders: reminders.length,
+      activeToday,
+      completedToday: completedMessages,
+      upcomingCount: reminders.length - completedMessages,
+    }
+  }
+
+  async pauseReminder(reminderId: string, userId: string): Promise<Reminder> {
+    return this.update({
+      where: { id: reminderId },
+      data: { notificationDays: [] },
+      userId,
     })
   }
 
+  async duplicateReminder(reminderId: string, userId: string): Promise<Reminder> {
+    const original = await this.findOneOrFail({ id: reminderId }, userId)
+
+    return this.create(
+      { id: userId },
+      {
+        text: `${original.text} (copy)`,
+        notificationTime: original.notificationTime,
+        notificationDays: original.notificationDays,
+        timeZone: original.timeZone,
+      }
+    )
+  }
+
   @Cron(CronExpression.EVERY_5_MINUTES)
-  async sendReminders() {
+  async sendReminders(): Promise<void> {
+    const trackingId = generateTrackingId()
     const now = new Date()
 
-    let remindersToSend = await this.db.reminder.findMany({
+    this.logger.log(`[${trackingId}] Running scheduled reminder check at ${formatDateForLog(now)}`)
+
+    const remindersToCheck = await this.db.reminder.findMany({
       where: {
         notificationTime: getNotificationTime(now),
       },
     })
 
-    remindersToSend = remindersToSend.filter((reminder) => {
+    const remindersToSend = remindersToCheck.filter((reminder) => {
       const userLocalNow = utcToZonedTime(now, reminder.timeZone)
       return reminder.notificationDays.includes(userLocalNow.getDay())
     })
 
-    this.logger.log(`Found ${remindersToSend.length} reminders to send`)
+    this.logger.log(
+      `[${trackingId}] Found ${remindersToCheck.length} reminders matching time, ` +
+        `${remindersToSend.length} active for today`
+    )
 
-    remindersToSend.forEach((reminder) => {
+    for (const reminder of remindersToSend) {
+      const reminderTrackingId = generateTrackingId()
       this.logger.log(
-        `Sending reminder to ${reminder.emoji} ${
-          reminder.id
-        } at time ${getNotificationTime(now)}`
+        `[${reminderTrackingId}] Sending reminder ${reminder.id} (${reminder.emoji}) ` +
+          `at ${formatDateForLog(now)}`
       )
-      this.messageService.create(reminder.id)
+
+      try {
+        await this.messageService.create(reminder.id)
+        this.logger.log(`[${reminderTrackingId}] Successfully queued message for reminder: ${reminder.id}`)
+      } catch (error) {
+        this.logger.error(
+          `[${reminderTrackingId}] Failed to create message for reminder ${reminder.id}: ${error.message}`
+        )
+      }
+    }
+  }
+
+  async countByUser(userId: string): Promise<number> {
+    return this.db.reminder.count({ where: { userId } })
+  }
+
+  async findByEmoji(userId: string, emoji: string): Promise<Reminder | null> {
+    return this.db.reminder.findFirst({
+      where: { userId, emoji },
     })
   }
 }
