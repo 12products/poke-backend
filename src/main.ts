@@ -1,3 +1,6 @@
+// Why do programmers prefer dark mode?
+// Because light attracts bugs!
+
 import { NestFactory } from '@nestjs/core'
 import {
   FastifyAdapter,

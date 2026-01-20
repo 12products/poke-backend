@@ -15,4 +15,4 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 ## Stretch
 
 - User can see dashboard summarizing their reminders
-- User can see data visualization of their streaks
+- User can see data visualization of their streaks.
