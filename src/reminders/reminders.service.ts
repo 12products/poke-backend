@@ -5,8 +5,8 @@ import { utcToZonedTime } from 'date-fns-tz'
 import { Reminder, Prisma, User } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
-import { emojis } from '../constants'
-import { getNotificationTime } from '../utils'
+import { emojis, dayNames } from '../constants'
+import { getNotificationTime, formatNotificationDays, formatTime } from '../utils'
 
 const getNextIndex = (reminders: Reminder[]): number => {
   const lastEmoji = reminders[reminders.length - 1].emoji
@@ -38,12 +38,10 @@ export class RemindersService {
       ? getNextIndex(currentReminders)
       : (Math.random() * emojis.length) | 0
       
+    const notifTime = getNotificationTime(new Date(data.notificationTime))
+    const daysReadable = formatNotificationDays(data.notificationDays as number[])
     this.logger.log(
-      `Creating reminder...${
-        data.notificationTime
-      } stored as ${getNotificationTime(new Date(data.notificationTime))} , ${
-        data.notificationDays
-      }}`
+      `Creating reminder "${data.text}" ${emojis[idx]} at ${formatTime(notifTime)} on ${daysReadable}`
     )
 
     return this.db.reminder.create({
@@ -138,10 +136,10 @@ export class RemindersService {
     this.logger.log(`Found ${remindersToSend.length} reminders to send`)
 
     remindersToSend.forEach((reminder) => {
+      const userLocalNow = utcToZonedTime(now, reminder.timeZone)
+      const dayName = dayNames[userLocalNow.getDay()]
       this.logger.log(
-        `Sending reminder to ${reminder.emoji} ${
-          reminder.id
-        } at time ${getNotificationTime(now)}`
+        `Sending reminder ${reminder.emoji} "${reminder.text}" (${reminder.id}) - ${dayName} ${formatTime(userLocalNow)}`
       )
       this.messageService.create(reminder.id)
     })

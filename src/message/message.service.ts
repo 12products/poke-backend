@@ -4,7 +4,8 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 import { Message, Prisma } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
-import { getNotificationTime, getNextSendTime } from '../utils'
+import { getNotificationTime, getNextSendTime, pickRandom } from '../utils'
+import { successMessages, nudgeMessages } from '../constants'
 
 @Injectable()
 export class MessageService {
@@ -87,7 +88,8 @@ export class MessageService {
   async receiveMessage(req) {
     this.logger.log(`Received message from user: ${req.body.Body}`)
 
-    let pokeResponse = `We'll give you another poke in a bit!`
+    let pokeResponse = pickRandom(nudgeMessages)
+    let acknowledged = false
 
     const userResponse = req.body.Body.trim()
     const user = await this.db.user.findUnique({
@@ -104,13 +106,14 @@ export class MessageService {
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
         this.remove({ reminderId: reminder.id })
-        pokeResponse = 'Great work!'
+        pokeResponse = pickRandom(successMessages)
+        acknowledged = true
         break
       }
     }
 
     this.logger.log(`Received message from user ${user.id}`)
-    this.logger.log(`Responding with: ${pokeResponse}`)
+    this.logger.log(`Acknowledged: ${acknowledged}, responding with: ${pokeResponse}`)
 
     return await this.twilio.respondToMessage(pokeResponse)
   }
