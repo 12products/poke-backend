@@ -1,5 +1,6 @@
 # compiled output
 /dist
+/build
 /node_modules
 
 # Logs
@@ -13,10 +14,16 @@ lerna-debug.log*
 
 # OS
 .DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
 
 # Tests
 /coverage
 /.nyc_output
+/test-results
+junit.xml
 
 # IDEs and editors
 /.idea
@@ -26,6 +33,7 @@ lerna-debug.log*
 *.launch
 .settings/
 *.sublime-workspace
+*.sublime-project
 
 # IDE - VSCode
 .vscode/*
@@ -33,5 +41,37 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/workspace.json
 
+# Environment files
 .env
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.test
+
+# Prisma
+prisma/*.db
+prisma/*.db-journal
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Cache
+.cache
+.eslintcache
+.prettiercache
+*.tsbuildinfo
+
+# Docker
+docker-compose.override.yml
+
+# Secrets (should never be committed)
+*.pem
+*.key
+secrets/
+credentials.json

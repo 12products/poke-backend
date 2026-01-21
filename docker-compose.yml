@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '${PORT:-3000}:3000'
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/poke
+      - TWILIO_ACCOUNT_ID=${TWILIO_ACCOUNT_ID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE=${TWILIO_PHONE}
+      - APPLE_SHARED_SECRET=${APPLE_SHARED_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - poke-network
+
+  db:
+    image: postgres:14-alpine
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: poke
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - poke-network
+
+  prisma-studio:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: npx prisma studio
+    ports:
+      - '5555:5555'
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/poke
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - tools
+    networks:
+      - poke-network
+
+volumes:
+  postgres_data:
+
+networks:
+  poke-network:
+    driver: bridge

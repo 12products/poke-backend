@@ -1,10 +1,26 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
 import { Message, Prisma } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
-import { getNotificationTime, getNextSendTime } from '../utils'
+import { getNotificationTime, getNextSendTime, sanitizeInput } from '../utils'
+import { RESPONSE_MESSAGES, MAX_RETRY_ATTEMPTS } from '../constants'
+
+export interface MessageStats {
+  totalSent: number
+  pendingRetries: number
+  acknowledgedToday: number
+}
+
+export interface MessageWithReminder extends Message {
+  reminder: {
+    id: string
+    text: string
+    emoji: string
+    userId: string
+  }
+}
 
 @Injectable()
 export class MessageService {
@@ -87,9 +103,9 @@ export class MessageService {
   async receiveMessage(req) {
     this.logger.log(`Received message from user: ${req.body.Body}`)
 
-    let pokeResponse = `We'll give you another poke in a bit!`
+    let pokeResponse = RESPONSE_MESSAGES.RETRY
 
-    const userResponse = req.body.Body.trim()
+    const userResponse = sanitizeInput(req.body.Body.trim())
     const user = await this.db.user.findUnique({
       where: { phone: req.body.From.replace('+', '') },
       include: {
@@ -98,13 +114,15 @@ export class MessageService {
     })
 
     if (!user) {
+      this.logger.warn(`No user found for phone: ${req.body.From}`)
       return
     }
 
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
         this.remove({ reminderId: reminder.id })
-        pokeResponse = 'Great work!'
+        pokeResponse = RESPONSE_MESSAGES.SUCCESS
+        this.logger.log(`Reminder ${reminder.id} acknowledged by user ${user.id}`)
         break
       }
     }
@@ -113,6 +131,72 @@ export class MessageService {
     this.logger.log(`Responding with: ${pokeResponse}`)
 
     return await this.twilio.respondToMessage(pokeResponse)
+  }
+
+  async getMessageStats(): Promise<MessageStats> {
+    const now = new Date()
+    const todayStart = new Date(now.setHours(0, 0, 0, 0))
+
+    const [totalSent, pendingRetries] = await Promise.all([
+      this.db.message.count(),
+      this.db.message.count({
+        where: {
+          active: true,
+          tries: { lt: MAX_RETRY_ATTEMPTS },
+        },
+      }),
+    ])
+
+    return {
+      totalSent,
+      pendingRetries,
+      acknowledgedToday: 0, // Would need to track acknowledgments
+    }
+  }
+
+  async getActiveMessages(): Promise<MessageWithReminder[]> {
+    return this.db.message.findMany({
+      where: { active: true },
+      include: {
+        reminder: {
+          select: {
+            id: true,
+            text: true,
+            emoji: true,
+            userId: true,
+          },
+        },
+      },
+    }) as Promise<MessageWithReminder[]>
+  }
+
+  async cancelMessage(reminderId: string, userId: string): Promise<boolean> {
+    const reminder = await this.db.reminder.findUnique({
+      where: { id: reminderId },
+    })
+
+    if (!reminder || reminder.userId !== userId) {
+      throw new NotFoundException('Reminder not found')
+    }
+
+    try {
+      await this.remove({ reminderId })
+      this.logger.log(`Message for reminder ${reminderId} cancelled by user ${userId}`)
+      return true
+    } catch (error) {
+      this.logger.error(`Failed to cancel message: ${error.message}`)
+      return false
+    }
+  }
+
+  async acknowledgeMessage(messageId: string): Promise<Message | null> {
+    const message = await this.findOne({ id: messageId })
+    if (!message) return null
+
+    return this.update({
+      where: { id: messageId },
+      data: { active: false },
+    })
   }
 
   @Cron(CronExpression.EVERY_MINUTE)
