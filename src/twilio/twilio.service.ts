@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import * as twilio from 'twilio'
 
+// The messenger pigeon of the 21st century 🐦
+// Except this pigeon never gets lost and charges per message
 @Injectable()
 export class TwilioService {
   private twilioClient: twilio.Twilio
@@ -22,7 +24,7 @@ export class TwilioService {
     return twimlResponse.toString()
   }
 
-  // used to send texts to users
+  // Yeet that text into the cellular void! 📱
   async sendMessage(body: string, phone: string) {
     const sentMessage = await this.twilioClient.messages.create({
       body,

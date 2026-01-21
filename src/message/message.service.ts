@@ -84,9 +84,11 @@ export class MessageService {
     return response
   }
 
+  // The moment of truth! Did they actually do the thing? 🤔
   async receiveMessage(req) {
     this.logger.log(`Received message from user: ${req.body.Body}`)
 
+    // Default response: We're not mad, just disappointed... and persistent
     let pokeResponse = `We'll give you another poke in a bit!`
 
     const userResponse = req.body.Body.trim()
@@ -104,7 +106,7 @@ export class MessageService {
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
         this.remove({ reminderId: reminder.id })
-        pokeResponse = 'Great work!'
+        pokeResponse = 'Great work!' // 🎉 Achievement unlocked: Adult responsibilities!
         break
       }
     }
@@ -115,6 +117,7 @@ export class MessageService {
     return await this.twilio.respondToMessage(pokeResponse)
   }
 
+  // The nag-o-tron: Because everyone needs a persistent robot friend
   @Cron(CronExpression.EVERY_MINUTE)
   async resendMessage() {
     // Finds all messages with nextSend time as now
@@ -142,7 +145,7 @@ export class MessageService {
     allMessages.forEach(async (message) => {
       await this.sendMessage(message.reminder.id)
       const nextSend = getNextSendTime(new Date(), message.tries)
-      const active = message.tries < 4
+      const active = message.tries < 4 // After 4 tries, even we give up. Some battles aren't worth fighting
 
       this.logger.log(
         `Resending message ${message.id} with tries ${

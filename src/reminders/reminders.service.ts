@@ -8,6 +8,8 @@ import { DatabaseService } from '../database/database.service'
 import { emojis } from '../constants'
 import { getNotificationTime } from '../utils'
 
+// Emoji roulette! Every reminder gets a unique emoji like Pokemon starters
+// Gotta catch 'em all (but in order, we're not savages)
 const getNextIndex = (reminders: Reminder[]): number => {
   const lastEmoji = reminders[reminders.length - 1].emoji
   const lastEmojiIndex = emojis.indexOf(lastEmoji)
@@ -31,6 +33,7 @@ export class RemindersService {
     })
 
     if (!currentUser.activeSubscription && currentReminders.length) {
+      // Nice try! But we gotta keep the lights on somehow 💸
       throw new Error('Need an active subscription for more reminders')
     }
 
@@ -120,6 +123,7 @@ export class RemindersService {
     })
   }
 
+  // The poke-inator 3000: Runs every 5 minutes like a caffeinated mailman
   @Cron(CronExpression.EVERY_5_MINUTES)
   async sendReminders() {
     const now = new Date()

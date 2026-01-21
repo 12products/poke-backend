@@ -6,10 +6,12 @@ import { set, add } from 'date-fns'
  * @returns : date object with month, day, year, seconds, and milliseconds hardcoded
  */
 export const getNotificationTime = (date: Date): Date => {
+  // Welcome to 2001: A Date Odyssey 🚀
+  // We normalize dates to compare just hours/minutes. Why 2001? Because Y2K was so last millennium
   return set(date, {
     month: 1,
     date: 1,
-    year: 2001,
+    year: 2001, // The year Shrek was released. Coincidence? I think not.
     seconds: 0,
     milliseconds: 0,
   })
@@ -22,5 +24,6 @@ export const getNotificationTime = (date: Date): Date => {
  */
 
 export const getNextSendTime = (nextSendTime: Date, tries: number): Date => {
+  // Persistence is key! Like that one friend who keeps texting until you respond
   return getNotificationTime(add(nextSendTime, { hours: tries }))
 }
