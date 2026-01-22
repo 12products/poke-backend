@@ -1,5 +1,7 @@
 # Poke
 
+> Stay accountable. Achieve your goals.
+
 Poke is a personal accountability system. You setup recurring goals on the platform and get reminded about them via text message. For example, if you want to go to the gym three days a week, you can add a reminder in Poke to message you on your gym days. Poke will keep track of when you accomplish your goals or when you've slipped up.
 
 ## MVP

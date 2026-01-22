@@ -1,7 +1,7 @@
 {
   "name": "poke-backend",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.0.2",
+  "description": "Personal accountability system with SMS reminders",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
