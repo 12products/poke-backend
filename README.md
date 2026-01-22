@@ -16,3 +16,7 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 
 - User can see dashboard summarizing their reminders
 - User can see data visualization of their streaks
+
+## Development
+
+This is a NestJS backend application. Run `yarn install` to install dependencies and `yarn start:dev` for development mode.
