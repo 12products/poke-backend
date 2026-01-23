@@ -9,4 +9,10 @@ export class AppController {
   healthCheck(): string {
     return 'OK'
   }
+
+  @Public()
+  @Get('version')
+  getVersion(): { version: string; name: string } {
+    return { version: '1.0.0', name: 'poke-backend' }
+  }
 }

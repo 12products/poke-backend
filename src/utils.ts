@@ -1,4 +1,4 @@
-import { set, add } from 'date-fns'
+import { set, add, format } from 'date-fns'
 
 /**
  *
@@ -23,4 +23,8 @@ export const getNotificationTime = (date: Date): Date => {
 
 export const getNextSendTime = (nextSendTime: Date, tries: number): Date => {
   return getNotificationTime(add(nextSendTime, { hours: tries }))
+}
+
+export const formatReadableDate = (date: Date): string => {
+  return format(date, 'MMMM do, yyyy h:mm a')
 }
