@@ -1,3 +1,5 @@
+// Reminders controller - the traffic cop of reminder requests
+// All your CRUD operations in one convenient place!
 import {
   Controller,
   Get,
@@ -48,6 +50,8 @@ export class RemindersController {
     })
   }
 
+  // Delete a reminder - no more pokes for this one
+  // Sometimes you just gotta let go
   @Delete(':id')
   remove(@CurrentUser() user: AuthUser, @Param('id') id: string) {
     return this.remindersService.remove({ id }, user.id)

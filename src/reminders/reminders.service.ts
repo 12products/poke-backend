@@ -1,3 +1,5 @@
+// The reminders service - the heart and soul of the poke app
+// This is where the real poking happens!
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { utcToZonedTime } from 'date-fns-tz'
@@ -8,6 +10,7 @@ import { DatabaseService } from '../database/database.service'
 import { emojis } from '../constants'
 import { getNotificationTime } from '../utils'
 
+// This function is like a DJ mixing emojis - always keeping it fresh
 const getNextIndex = (reminders: Reminder[]): number => {
   const lastEmoji = reminders[reminders.length - 1].emoji
   const lastEmojiIndex = emojis.indexOf(lastEmoji)
@@ -30,6 +33,7 @@ export class RemindersService {
       where: { id: user.id },
     })
 
+    // Pay to poke - capitalism at its finest
     if (!currentUser.activeSubscription && currentReminders.length) {
       throw new Error('Need an active subscription for more reminders')
     }
@@ -120,6 +124,8 @@ export class RemindersService {
     })
   }
 
+  // Every 5 minutes, like clockwork, we check who needs a poke
+  // Some call it annoying, we call it "caring persistently"
   @Cron(CronExpression.EVERY_5_MINUTES)
   async sendReminders() {
     const now = new Date()

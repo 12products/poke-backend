@@ -1,3 +1,5 @@
+// The users controller - routing requests like a traffic cop
+// But friendlier and with less whistles
 import { Controller, Get, Body, Patch, Param } from '@nestjs/common'
 import { AuthUser } from '@supabase/supabase-js'
 
@@ -5,6 +7,7 @@ import { Prisma } from '@prisma/client'
 import { UsersService } from './users.service'
 import { CurrentUser } from '../auth/current-user.decorator'
 
+// This controller handles all user-related shenanigans
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}

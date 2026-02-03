@@ -1,3 +1,5 @@
+// Subscriptions service - where money meets functionality
+// Pay to play, friends!
 import { Injectable } from '@nestjs/common'
 import { AuthUser } from '@supabase/supabase-js'
 import { ConfigService } from '@nestjs/config'
@@ -18,6 +20,8 @@ export class SubscriptionsService {
     )
   }
 
+  // Verify that Apple receipt and grant premium access
+  // Tim Cook would be proud (maybe)
   async create(user: AuthUser, receipt: string) {
     appleReceiptVerify.config({
       secret: this.appleSharedSecret,
@@ -43,6 +47,8 @@ export class SubscriptionsService {
     return 'ok'
   }
 
+  // Cancel subscription - we're sad to see you go!
+  // But we'll still keep the porch light on
   async delete(user: AuthUser) {
     try {
       await this.users.update({

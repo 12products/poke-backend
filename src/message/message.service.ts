@@ -1,3 +1,5 @@
+// The message service - delivering pokes to your pocket
+// It's like a carrier pigeon, but digital and more reliable
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
@@ -84,6 +86,8 @@ export class MessageService {
     return response
   }
 
+  // When users text back - the moment of truth!
+  // Did they do the thing? Let's find out!
   async receiveMessage(req) {
     this.logger.log(`Received message from user: ${req.body.Body}`)
 
@@ -115,6 +119,8 @@ export class MessageService {
     return await this.twilio.respondToMessage(pokeResponse)
   }
 
+  // Every minute we check if someone needs another poke
+  // Persistence is key! (or annoying, depends who you ask)
   @Cron(CronExpression.EVERY_MINUTE)
   async resendMessage() {
     // Finds all messages with nextSend time as now

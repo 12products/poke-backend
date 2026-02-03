@@ -1,3 +1,5 @@
+// Utils: where all the helper functions live
+// Think of this as the toolbox under the sink
 import { set, add } from 'date-fns'
 
 /**
@@ -6,10 +8,12 @@ import { set, add } from 'date-fns'
  * @returns : date object with month, day, year, seconds, and milliseconds hardcoded
  */
 export const getNotificationTime = (date: Date): Date => {
+  // Why 2001? Because it's the year of Space Odyssey
+  // Also, we just need a consistent date for comparison
   return set(date, {
-    month: 1,
-    date: 1,
-    year: 2001,
+    month: 1, // February because why not
+    date: 1, // First of the month, rent is due
+    year: 2001, // A space odyssey indeed
     seconds: 0,
     milliseconds: 0,
   })

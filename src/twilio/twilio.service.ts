@@ -1,3 +1,5 @@
+// Twilio service - making phones buzz since whenever
+// Ring ring, it's your reminder calling!
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import * as twilio from 'twilio'
@@ -8,7 +10,9 @@ export class TwilioService {
   private twilioPhone: string
   private twiml: twilio.TwimlInterface
 
+  // Setting up the Twilio magic sauce
   constructor(private readonly configService: ConfigService) {
+    // These secrets are more guarded than grandma's cookie recipe
     const accountID = this.configService.get<string>('TWILIO_ACCOUNT_ID')
     const authToken = this.configService.get<string>('TWILIO_AUTH_TOKEN')
     this.twilioPhone = this.configService.get<string>('TWILIO_PHONE')

@@ -1,3 +1,5 @@
+// The app module - the glue that holds everything together
+// Like duct tape, but for code
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
@@ -12,6 +14,7 @@ import { AuthModule } from './auth/auth.module'
 import { SubscriptionsModule } from './subscriptions/subscriptions.module'
 import { PokeAuthGuard } from './auth/auth.guard'
 
+// Here we import all the modules like a kid collecting Pokemon cards
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
