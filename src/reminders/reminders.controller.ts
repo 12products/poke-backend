@@ -10,8 +10,8 @@ import {
 import { AuthUser } from '@supabase/supabase-js'
 
 import { RemindersService } from './reminders.service'
-import { Prisma } from '@prisma/client'
 import { CurrentUser } from '../auth/current-user.decorator'
+import { CreateReminderDto, UpdateReminderDto } from './dto'
 
 @Controller('reminders')
 export class RemindersController {
@@ -28,10 +28,7 @@ export class RemindersController {
   }
 
   @Post()
-  create(
-    @Body() data: Prisma.ReminderCreateInput,
-    @CurrentUser() user: AuthUser
-  ) {
+  create(@Body() data: CreateReminderDto, @CurrentUser() user: AuthUser) {
     return this.remindersService.create(user, data)
   }
 
@@ -39,7 +36,7 @@ export class RemindersController {
   update(
     @CurrentUser() user: AuthUser,
     @Param('id') id: string,
-    @Body() data: Prisma.ReminderUpdateInput
+    @Body() data: UpdateReminderDto
   ) {
     return this.remindersService.update({
       where: { id },
