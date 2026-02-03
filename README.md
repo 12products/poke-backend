@@ -16,3 +16,7 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 
 - User can see dashboard summarizing their reminders
 - User can see data visualization of their streaks
+
+## Developer Joke
+
+Why do backend developers make great accountability partners? Because they never let your requests go unhandled! 🎯
