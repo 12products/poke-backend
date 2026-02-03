@@ -1,43 +1,61 @@
+// Prisma Schema
+// This file defines the database schema for the Poke application
+// It uses PostgreSQL as the database provider
+
+// Prisma Client generator configuration
+// This generates the TypeScript client we use to query the database
 generator client {
   provider = "prisma-client-js"
 }
 
+// Database connection configuration
+// Uses the DATABASE_URL environment variable
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "postgresql" // Using PostgreSQL
+  url      = env("DATABASE_URL") // Connection string from environment
 }
 
+// Reminder model
+// Represents a poke/reminder that a user has set up
+// These are the core entities of the application
 model Reminder {
-  id               String   @id @default(uuid())
-  text             String
-  notificationTime DateTime @db.Timestamptz(6)
-  // 0 indexed; 0 = Sunday, 6 = Saturday, etc.
-  notificationDays Int[]
-  user             User     @relation(fields: [userId], references: [id])
-  userId           String
-  message          Message?
-  emoji            String
-  color            String   @default("blue")
-  createdAt        DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt        DateTime @default(now()) @db.Timestamptz(6)
-  timeZone         String
+  id               String   @id @default(uuid()) // Unique identifier
+  text             String // The reminder message text
+  notificationTime DateTime @db.Timestamptz(6) // Time of day to send (normalized to fixed date)
+  // Days of the week to send this reminder
+  // 0 indexed; 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  notificationDays Int[] // Array of day numbers
+  user             User     @relation(fields: [userId], references: [id]) // Belongs to a user
+  userId           String // Foreign key to User
+  message          Message? // Optional active message (for retry tracking)
+  emoji            String // The emoji the user responds with to acknowledge
+  color            String   @default("blue") // UI color for the reminder card
+  createdAt        DateTime @default(now()) @db.Timestamptz(6) // When created
+  updatedAt        DateTime @default(now()) @db.Timestamptz(6) // When last updated
+  timeZone         String // User's timezone for accurate day calculation
 }
 
+// User model
+// Represents a registered user of the application
+// Linked to Supabase auth via the id field
 model User {
-  id                 String     @id @default(uuid())
-  name               String?
-  phone              String     @unique
-  onboarded          Boolean    @default(false)
-  reminders          Reminder[]
-  activeSubscription String?
+  id                 String     @id @default(uuid()) // Matches Supabase user ID
+  name               String? // Optional display name
+  phone              String     @unique // Phone number for SMS (unique)
+  onboarded          Boolean    @default(false) // Has completed onboarding?
+  reminders          Reminder[] // User's reminders (one-to-many)
+  activeSubscription String? // Product ID if subscribed, null if free tier
 }
 
+// Message model
+// Represents an active/pending poke that's been sent
+// Used for tracking retry attempts and acknowledgment
 model Message {
-  id         String   @id @default(uuid())
-  reminder   Reminder @relation(fields: [reminderId], references: [id])
-  reminderId String   @unique
-  createdAt  DateTime @default(now()) @db.Timestamptz(6)
-  nextSend   DateTime @default(now()) @db.Timestamptz(6)
-  tries      Int      @default(1)
-  active     Boolean  @default(false)
+  id         String   @id @default(uuid()) // Unique identifier
+  reminder   Reminder @relation(fields: [reminderId], references: [id]) // Linked reminder
+  reminderId String   @unique // Foreign key to Reminder (unique = one message per reminder)
+  createdAt  DateTime @default(now()) @db.Timestamptz(6) // When the message was created
+  nextSend   DateTime @default(now()) @db.Timestamptz(6) // When to send the next retry
+  tries      Int      @default(1) // Number of send attempts (for exponential backoff)
+  active     Boolean  @default(false) // Is this message still active (waiting for response)?
 }
