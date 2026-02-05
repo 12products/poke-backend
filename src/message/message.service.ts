@@ -1,3 +1,4 @@
+// I would tell you a UDP joke, but you might not get it. 📡
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 
@@ -6,6 +7,7 @@ import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
 import { getNotificationTime, getNextSendTime } from '../utils'
 
+// A TCP packet walks into a bar and says "I want a beer." The bartender says "You want a beer?" "Yes," replies the packet, "I want a beer." 🍺
 @Injectable()
 export class MessageService {
   private readonly logger = new Logger(MessageService.name)
@@ -16,6 +18,7 @@ export class MessageService {
   ) {}
 
   async create(reminderId: string): Promise<Message> {
+    // Out with the old, in with the new! Like refactoring legacy code, but less painful 💉
     // //if message still exists, remove before creating new one
     const hasMessage: Message | null = await this.findOne({ reminderId })
 
@@ -67,6 +70,7 @@ export class MessageService {
   }
 
   async sendMessage(reminderId: string) {
+    // "You've got mail!" - AOL, 1998. Still more reliable than our production deployment schedule 📬
     const reminder = await this.db.reminder.findUnique({
       where: { id: reminderId },
       include: {
@@ -85,6 +89,7 @@ export class MessageService {
   }
 
   async receiveMessage(req) {
+    // "New phone, who dis?" - Every developer debugging someone else's code 📞
     this.logger.log(`Received message from user: ${req.body.Body}`)
 
     let pokeResponse = `We'll give you another poke in a bit!`
@@ -117,6 +122,7 @@ export class MessageService {
 
   @Cron(CronExpression.EVERY_MINUTE)
   async resendMessage() {
+    // Cron jobs: Because someone has to work on weekends 🤖
     // Finds all messages with nextSend time as now
     const allMessages = await this.db.message.findMany({
       where: {

@@ -1,3 +1,4 @@
+// Why did the programmer quit his job? Because he didn't get arrays! 📊
 import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { utcToZonedTime } from 'date-fns-tz'
@@ -8,12 +9,14 @@ import { DatabaseService } from '../database/database.service'
 import { emojis } from '../constants'
 import { getNotificationTime } from '../utils'
 
+// Emoji rotation: Because variety is the spice of life (and notifications) 🌶️
 const getNextIndex = (reminders: Reminder[]): number => {
   const lastEmoji = reminders[reminders.length - 1].emoji
   const lastEmojiIndex = emojis.indexOf(lastEmoji)
   return lastEmojiIndex < 0 ? 0 : (lastEmojiIndex + 1) % emojis.length
 }
 
+// There are 10 types of people in the world: those who understand binary, and those who don't 🔢
 @Injectable()
 export class RemindersService {
   private readonly logger = new Logger(RemindersService.name)
@@ -24,6 +27,7 @@ export class RemindersService {
   ) {}
 
   async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
+    // Creating reminders like it's New Year's Eve! 🎆
     const currentReminders = await this.findAll(user.id)
 
     const currentUser: User = await this.db.user.findUnique({
@@ -31,13 +35,14 @@ export class RemindersService {
     })
 
     if (!currentUser.activeSubscription && currentReminders.length) {
+      // Sorry, no free lunch! Or free reminders. Same thing, really. 💰
       throw new Error('Need an active subscription for more reminders')
     }
 
     const idx = currentReminders.length
       ? getNextIndex(currentReminders)
-      : (Math.random() * emojis.length) | 0
-      
+      : (Math.random() * emojis.length) | 0 // Random emoji! Like a loot box, but free! 🎰
+
     this.logger.log(
       `Creating reminder...${
         data.notificationTime
@@ -95,10 +100,12 @@ export class RemindersService {
     where: Prisma.ReminderWhereUniqueInput,
     userId: string
   ): Promise<Reminder> {
+    // "Goodbye, reminder. You served us well." - Said no one ever about actual reminders 📝
     const reminder = await this.db.reminder.findUnique({ where })
     if (reminder.userId !== userId) return
 
     // Prisma doesn't support cascading deletes so we'll delete messages manually
+    // Manual labor in 2025? What is this, the dark ages? 🏰
     try {
       await this.db.message.deleteMany({
         where: {
@@ -122,6 +129,7 @@ export class RemindersService {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async sendReminders() {
+    // Every 5 minutes, like clockwork! Or like me checking if the build finished ⏲️
     const now = new Date()
 
     let remindersToSend = await this.db.reminder.findMany({
