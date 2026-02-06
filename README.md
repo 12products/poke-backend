@@ -16,3 +16,19 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 
 - User can see dashboard summarizing their reminders
 - User can see data visualization of their streaks
+
+---
+
+## Developer Jokes (Backend Edition)
+
+**Q:** Why do backend developers prefer dark mode?
+**A:** Because light attracts bugs!
+
+**Q:** How many backend developers does it take to change a light bulb?
+**A:** None, that's a frontend problem.
+
+**Q:** What's a backend developer's favorite tea?
+**A:** Async-chai!
+
+**Q:** Why did the API go to therapy?
+**A:** It had too many issues with its endpoints.
