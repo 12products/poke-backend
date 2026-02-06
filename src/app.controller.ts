@@ -6,7 +6,10 @@ import { Public } from 'src/auth/public.decorator'
 export class AppController {
   @Public()
   @Get()
-  healthCheck(): string {
-    return 'OK'
+  healthCheck() {
+    return {
+      status: 'OK',
+      timestamp: new Date().toISOString(),
+    }
   }
 }
