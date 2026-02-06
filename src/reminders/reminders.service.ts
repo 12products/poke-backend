@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, ForbiddenException } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { utcToZonedTime } from 'date-fns-tz'
 
@@ -31,7 +31,7 @@ export class RemindersService {
     })
 
     if (!currentUser.activeSubscription && currentReminders.length) {
-      throw new Error('Need an active subscription for more reminders')
+      throw new ForbiddenException('Need an active subscription for more reminders')
     }
 
     const idx = currentReminders.length
@@ -71,6 +71,7 @@ export class RemindersService {
     userId: string
   ): Promise<Reminder | null> {
     const reminder = await this.db.reminder.findUnique({ where })
+    if (!reminder) return null
     return reminder.userId === userId ? reminder : null
   }
 
@@ -84,7 +85,7 @@ export class RemindersService {
     userId: string
   }): Promise<Reminder> {
     const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
+    if (!reminder || reminder.userId !== userId) return
     this.logger.log(
       `Updating reminder ${reminder.id} with ${JSON.stringify(data)}`
     )
@@ -96,7 +97,7 @@ export class RemindersService {
     userId: string
   ): Promise<Reminder> {
     const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
+    if (!reminder || reminder.userId !== userId) return
 
     // Prisma doesn't support cascading deletes so we'll delete messages manually
     try {
@@ -137,13 +138,13 @@ export class RemindersService {
 
     this.logger.log(`Found ${remindersToSend.length} reminders to send`)
 
-    remindersToSend.forEach((reminder) => {
+    for (const reminder of remindersToSend) {
       this.logger.log(
         `Sending reminder to ${reminder.emoji} ${
           reminder.id
         } at time ${getNotificationTime(now)}`
       )
-      this.messageService.create(reminder.id)
-    })
+      await this.messageService.create(reminder.id)
+    }
   }
 }

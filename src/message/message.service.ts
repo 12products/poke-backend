@@ -4,7 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 import { Message, Prisma } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
-import { getNotificationTime, getNextSendTime } from '../utils'
+import { getNextSendTime } from '../utils'
 
 @Injectable()
 export class MessageService {
@@ -103,7 +103,7 @@ export class MessageService {
 
     for (const reminder of user.reminders) {
       if (reminder.emoji === userResponse) {
-        this.remove({ reminderId: reminder.id })
+        await this.remove({ reminderId: reminder.id })
         pokeResponse = 'Great work!'
         break
       }
@@ -123,7 +123,7 @@ export class MessageService {
         AND: [
           {
             nextSend: {
-              lte: getNotificationTime(new Date()),
+              lte: new Date(),
             },
           },
           {
@@ -139,7 +139,7 @@ export class MessageService {
 
     this.logger.log(`Found ${allMessages.length} messages to send`)
 
-    allMessages.forEach(async (message) => {
+    for (const message of allMessages) {
       await this.sendMessage(message.reminder.id)
       const nextSend = getNextSendTime(new Date(), message.tries)
       const active = message.tries < 4
@@ -147,13 +147,13 @@ export class MessageService {
       this.logger.log(
         `Resending message ${message.id} with tries ${
           message.tries
-        }that matches nextSend of ${getNotificationTime(new Date())} `
+        }, next send at ${nextSend}`
       )
 
       await this.update({
         where: { id: message.id },
         data: { nextSend, tries: message.tries + 1, active },
       })
-    })
+    }
   }
 }

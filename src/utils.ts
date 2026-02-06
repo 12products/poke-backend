@@ -22,5 +22,5 @@ export const getNotificationTime = (date: Date): Date => {
  */
 
 export const getNextSendTime = (nextSendTime: Date, tries: number): Date => {
-  return getNotificationTime(add(nextSendTime, { hours: tries }))
+  return add(nextSendTime, { hours: tries })
 }

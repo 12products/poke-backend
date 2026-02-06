@@ -1,4 +1,11 @@
-import { Controller, Get, Body, Patch, Param } from '@nestjs/common'
+import {
+  Controller,
+  Get,
+  Body,
+  Patch,
+  Param,
+  ForbiddenException,
+} from '@nestjs/common'
 import { AuthUser } from '@supabase/supabase-js'
 
 import { Prisma } from '@prisma/client'
@@ -15,7 +22,14 @@ export class UsersController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() data: Prisma.UserUpdateInput) {
+  update(
+    @CurrentUser() user: AuthUser,
+    @Param('id') id: string,
+    @Body() data: Prisma.UserUpdateInput
+  ) {
+    if (user.id !== id) {
+      throw new ForbiddenException('You can only update your own profile')
+    }
     return this.usersService.update({ where: { id }, data })
   }
 }

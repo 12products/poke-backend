@@ -19,7 +19,7 @@ async function bootstrap() {
 
   app.setGlobalPrefix('/v1')
 
-  await app.listen(process.env.PORT || 3000)
+  await app.listen(process.env.PORT || 3000, '0.0.0.0')
 
   console.log(`Application is running on: ${await app.getUrl()}`)
 }

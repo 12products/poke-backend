@@ -1,4 +1,4 @@
-import { Controller, Header, Post, Req } from '@nestjs/common'
+import { Controller, Header, Post, Body, Req } from '@nestjs/common'
 
 import { Public } from 'src/auth/public.decorator'
 import { MessageService } from './message.service'
@@ -8,7 +8,7 @@ export class MessageController {
   constructor(private readonly messageService: MessageService) {}
 
   @Post()
-  sendMessage(reminderId: string) {
+  sendMessage(@Body('reminderId') reminderId: string) {
     return this.messageService.sendMessage(reminderId)
   }
 

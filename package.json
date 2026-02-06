@@ -28,6 +28,7 @@
     "@nestjs/mapped-types": "*",
     "@nestjs/passport": "^8.1.0",
     "@nestjs/platform-express": "^8.0.0",
+    "@nestjs/platform-fastify": "^8.2.4",
     "@nestjs/schedule": "^1.0.2",
     "@prisma/client": "3.7.0",
     "@supabase/supabase-js": "^1.29.3",
@@ -45,7 +46,6 @@
   },
   "devDependencies": {
     "@nestjs/cli": "^8.0.0",
-    "@nestjs/platform-fastify": "^8.2.4",
     "@nestjs/schematics": "^8.0.0",
     "@nestjs/testing": "^8.0.0",
     "@types/cron": "^1.7.3",
