@@ -24,3 +24,33 @@ export const getNotificationTime = (date: Date): Date => {
 export const getNextSendTime = (nextSendTime: Date, tries: number): Date => {
   return getNotificationTime(add(nextSendTime, { hours: tries }))
 }
+
+/**
+ * Generates a motivational message based on streak count
+ * @param streakCount : number of consecutive successful days
+ * @returns : motivational message string
+ */
+export const getMotivationalMessage = (streakCount: number): string => {
+  if (streakCount === 0) {
+    return "Every journey begins with a single step! 🚀"
+  } else if (streakCount === 1) {
+    return "Great start! Keep the momentum going! 💪"
+  } else if (streakCount < 7) {
+    return `${streakCount} days strong! You're building a habit! 🔥`
+  } else if (streakCount < 30) {
+    return `Wow! ${streakCount} day streak! You're unstoppable! ⭐`
+  } else if (streakCount < 100) {
+    return `Incredible! ${streakCount} days! You're a legend! 🏆`
+  } else {
+    return `${streakCount} DAYS?! You're a superhuman! 🦸`
+  }
+}
+
+/**
+ * Gets a random emoji from the available emojis
+ * @param emojis : array of emoji strings
+ * @returns : random emoji string
+ */
+export const getRandomEmoji = (emojis: string[]): string => {
+  return emojis[Math.floor(Math.random() * emojis.length)]
+}
