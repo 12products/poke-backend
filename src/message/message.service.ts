@@ -4,6 +4,7 @@ import { Cron, CronExpression } from '@nestjs/schedule'
 import { Message, Prisma } from '@prisma/client'
 import { DatabaseService } from '../database/database.service'
 import { TwilioService } from '../twilio/twilio.service'
+import { MAX_RETRIES } from '../constants'
 import { getNotificationTime, getNextSendTime } from '../utils'
 
 @Injectable()
@@ -87,7 +88,7 @@ export class MessageService {
   async receiveMessage(req) {
     this.logger.log(`Received message from user: ${req.body.Body}`)
 
-    let pokeResponse = `We'll give you another poke in a bit!`
+    let pokeResponse = `Hang tight — another poke is on the way!`
 
     const userResponse = req.body.Body.trim()
     const user = await this.db.user.findUnique({
@@ -142,7 +143,7 @@ export class MessageService {
     allMessages.forEach(async (message) => {
       await this.sendMessage(message.reminder.id)
       const nextSend = getNextSendTime(new Date(), message.tries)
-      const active = message.tries < 4
+      const active = message.tries < 5
 
       this.logger.log(
         `Resending message ${message.id} with tries ${

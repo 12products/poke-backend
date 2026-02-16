@@ -5,7 +5,7 @@ import { utcToZonedTime } from 'date-fns-tz'
 import { Reminder, Prisma, User } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
-import { emojis } from '../constants'
+import { emojis, MAX_REMINDERS_FREE_TIER } from '../constants'
 import { getNotificationTime } from '../utils'
 
 const getNextIndex = (reminders: Reminder[]): number => {
@@ -30,8 +30,13 @@ export class RemindersService {
       where: { id: user.id },
     })
 
-    if (!currentUser.activeSubscription && currentReminders.length) {
-      throw new Error('Need an active subscription for more reminders')
+    if (
+      !currentUser.activeSubscription &&
+      currentReminders.length >= MAX_REMINDERS_FREE_TIER
+    ) {
+      throw new Error(
+        `Free tier is limited to ${MAX_REMINDERS_FREE_TIER} reminder(s). Upgrade for more!`
+      )
     }
 
     const idx = currentReminders.length
@@ -120,7 +125,7 @@ export class RemindersService {
     })
   }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_MINUTE)
   async sendReminders() {
     const now = new Date()
 
