@@ -79,7 +79,7 @@ export class MessageService {
       reminder.user.phone
     )
     this.logger.log(
-      `Message sending to ${reminderId}, response from twillio ${response}`
+      `Message sending to ${reminderId}, response from twilio ${response}`
     )
     return response
   }
