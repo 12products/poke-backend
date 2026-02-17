@@ -143,7 +143,7 @@ export class MessageService {
     allMessages.forEach(async (message) => {
       await this.sendMessage(message.reminder.id)
       const nextSend = getNextSendTime(new Date(), message.tries)
-      const active = message.tries < 5
+      const active = message.tries < MAX_RETRIES
 
       this.logger.log(
         `Resending message ${message.id} with tries ${
