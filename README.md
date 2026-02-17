@@ -8,7 +8,7 @@ Poke is a personal accountability system. You setup recurring goals on the platf
 - User can set which days reminders are sent
 - User can set which times reminders are sent
 - User can respond to text to confirm completion
-- User can response to text to disable reminders (”snooze”)
+- User can respond to text to disable reminders ("snooze")
 - User gets reminded if they do not respond to text
 - User can manage their reminders
 

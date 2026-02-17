@@ -1,7 +1,7 @@
 {
   "name": "poke-backend",
   "version": "0.0.1",
-  "description": "",
+  "description": "Backend service for Poke, a personal accountability system",
   "author": "",
   "private": true,
   "license": "UNLICENSED",
