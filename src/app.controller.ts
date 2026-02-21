@@ -9,4 +9,10 @@ export class AppController {
   healthCheck(): string {
     return 'OK'
   }
+
+  @Public()
+  @Get('hello')
+  helloWorld(): string {
+    return 'Hello, World!'
+  }
 }
