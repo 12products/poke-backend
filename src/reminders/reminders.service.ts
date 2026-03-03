@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
 import { utcToZonedTime } from 'date-fns-tz'
 
-import { Reminder, Prisma, User } from '@prisma/client'
+import { Reminder, Prisma } from '@prisma/client'
 import { MessageService } from '../message/message.service'
 import { DatabaseService } from '../database/database.service'
 import { emojis } from '../constants'
@@ -24,11 +24,13 @@ export class RemindersService {
   ) {}
 
   async create(user, data: Prisma.ReminderCreateInput): Promise<Reminder> {
-    const currentReminders = await this.findAll(user.id)
-
-    const currentUser: User = await this.db.user.findUnique({
+    // Single query: fetch user with reminders instead of two separate queries
+    const currentUser = await this.db.user.findUnique({
       where: { id: user.id },
+      include: { reminders: true },
     })
+
+    const currentReminders = currentUser.reminders
 
     if (!currentUser.activeSubscription && currentReminders.length) {
       throw new Error('Need an active subscription for more reminders')
@@ -70,8 +72,9 @@ export class RemindersService {
     where: Prisma.ReminderWhereUniqueInput,
     userId: string
   ): Promise<Reminder | null> {
-    const reminder = await this.db.reminder.findUnique({ where })
-    return reminder.userId === userId ? reminder : null
+    return this.db.reminder.findFirst({
+      where: { id: where.id, userId },
+    })
   }
 
   async update({
@@ -83,20 +86,24 @@ export class RemindersService {
     data: Prisma.ReminderUpdateInput
     userId: string
   }): Promise<Reminder> {
-    const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
+    const reminder = await this.db.reminder.findFirst({
+      where: { id: where.id, userId },
+    })
+    if (!reminder) return
     this.logger.log(
       `Updating reminder ${reminder.id} with ${JSON.stringify(data)}`
     )
-    return this.db.reminder.update({ where, data })
+    return this.db.reminder.update({ where: { id: reminder.id }, data })
   }
 
   async remove(
     where: Prisma.ReminderWhereUniqueInput,
     userId: string
   ): Promise<Reminder> {
-    const reminder = await this.db.reminder.findUnique({ where })
-    if (reminder.userId !== userId) return
+    const reminder = await this.db.reminder.findFirst({
+      where: { id: where.id, userId },
+    })
+    if (!reminder) return
 
     // Prisma doesn't support cascading deletes so we'll delete messages manually
     try {
@@ -115,7 +122,7 @@ export class RemindersService {
 
     return this.db.reminder.delete({
       where: {
-        id: where.id,
+        id: reminder.id,
       },
     })
   }
@@ -137,13 +144,15 @@ export class RemindersService {
 
     this.logger.log(`Found ${remindersToSend.length} reminders to send`)
 
-    remindersToSend.forEach((reminder) => {
-      this.logger.log(
-        `Sending reminder to ${reminder.emoji} ${
-          reminder.id
-        } at time ${getNotificationTime(now)}`
-      )
-      this.messageService.create(reminder.id)
-    })
+    await Promise.all(
+      remindersToSend.map(async (reminder) => {
+        this.logger.log(
+          `Sending reminder to ${reminder.emoji} ${
+            reminder.id
+          } at time ${getNotificationTime(now)}`
+        )
+        await this.messageService.create(reminder.id)
+      })
+    )
   }
 }

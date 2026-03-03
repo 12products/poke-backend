@@ -16,12 +16,8 @@ export class MessageService {
   ) {}
 
   async create(reminderId: string): Promise<Message> {
-    // //if message still exists, remove before creating new one
-    const hasMessage: Message | null = await this.findOne({ reminderId })
-
-    if (hasMessage) {
-      await this.remove({ reminderId })
-    }
+    // Remove existing message in a single operation instead of find + delete
+    await this.db.message.deleteMany({ where: { reminderId } })
 
     const nextSend = getNextSendTime(new Date(), 1)
     this.logger.log(
@@ -90,26 +86,24 @@ export class MessageService {
     let pokeResponse = `We'll give you another poke in a bit!`
 
     const userResponse = req.body.Body.trim()
-    const user = await this.db.user.findUnique({
-      where: { phone: req.body.From.replace('+', '') },
-      include: {
-        reminders: true,
+    const phone = req.body.From.replace('+', '')
+
+    // Single query: find reminder matching emoji for this user's phone
+    const matchingReminder = await this.db.reminder.findFirst({
+      where: {
+        emoji: userResponse,
+        user: { phone },
       },
     })
 
-    if (!user) {
-      return
+    if (!matchingReminder) {
+      const user = await this.db.user.findUnique({ where: { phone } })
+      if (!user) return
+    } else {
+      await this.remove({ reminderId: matchingReminder.id })
+      pokeResponse = 'Great work!'
     }
 
-    for (const reminder of user.reminders) {
-      if (reminder.emoji === userResponse) {
-        this.remove({ reminderId: reminder.id })
-        pokeResponse = 'Great work!'
-        break
-      }
-    }
-
-    this.logger.log(`Received message from user ${user.id}`)
     this.logger.log(`Responding with: ${pokeResponse}`)
 
     return await this.twilio.respondToMessage(pokeResponse)
@@ -139,21 +133,23 @@ export class MessageService {
 
     this.logger.log(`Found ${allMessages.length} messages to send`)
 
-    allMessages.forEach(async (message) => {
-      await this.sendMessage(message.reminder.id)
-      const nextSend = getNextSendTime(new Date(), message.tries)
-      const active = message.tries < 4
+    await Promise.all(
+      allMessages.map(async (message) => {
+        await this.sendMessage(message.reminder.id)
+        const nextSend = getNextSendTime(new Date(), message.tries)
+        const active = message.tries < 4
 
-      this.logger.log(
-        `Resending message ${message.id} with tries ${
-          message.tries
-        }that matches nextSend of ${getNotificationTime(new Date())} `
-      )
+        this.logger.log(
+          `Resending message ${message.id} with tries ${
+            message.tries
+          }that matches nextSend of ${getNotificationTime(new Date())} `
+        )
 
-      await this.update({
-        where: { id: message.id },
-        data: { nextSend, tries: message.tries + 1, active },
+        await this.update({
+          where: { id: message.id },
+          data: { nextSend, tries: message.tries + 1, active },
+        })
       })
-    })
+    )
   }
 }
