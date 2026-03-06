@@ -172,7 +172,35 @@ app.enableCors({
 
 ---
 
-### 11. Sequential Awaits That Could Be Parallel
+### 11. Missing Authorization Check on User Update (Security)
+**File:** `src/users/users.controller.ts:17-20`
+
+```typescript
+@Patch(':id')
+update(@Param('id') id: string, @Body() data: Prisma.UserUpdateInput) {
+  return this.usersService.update({ where: { id }, data })
+}
+```
+
+**Problem:** No verification that the authenticated user matches the `:id` param. Any authenticated user can modify any other user's profile data.
+
+**Fix:** Add `@CurrentUser()` decorator and verify `user.id === id` before proceeding.
+
+---
+
+### 12. Missing Await on `remove()` in SMS Webhook
+**File:** `src/message/message.service.ts:106`
+
+```typescript
+this.remove({ reminderId: reminder.id })  // Not awaited!
+pokeResponse = 'Great work!'
+```
+
+**Problem:** The message deletion is fire-and-forget. The SMS response is sent before deletion completes, risking race conditions if another cron tick fires before the delete finishes.
+
+---
+
+### 13. Sequential Awaits That Could Be Parallel
 **File:** `src/message/message.service.ts:142-157`
 
 Inside the loop, `sendMessage()` and `update()` are run sequentially per message. The DB update doesn't depend on the SMS result.
@@ -195,4 +223,6 @@ Inside the loop, `sendMessage()` and `update()` are run sequentially per message
 | 8 | No caching layer | MEDIUM | (throughout) |
 | 9 | Unbounded findAll() | LOW | users/message service |
 | 10 | Permissive CORS | LOW | main.ts |
-| 11 | Sequential awaits | LOW | message.service.ts |
+| 11 | Missing auth check on user update | HIGH | users.controller.ts |
+| 12 | Missing await on remove() | MEDIUM | message.service.ts |
+| 13 | Sequential awaits | LOW | message.service.ts |
