@@ -6,6 +6,14 @@ import {
 
 import { AppModule } from './app.module'
 
+// Handle --version flag
+if (process.argv.includes('--version') || process.argv.includes('-v')) {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const { name, version } = require('../package.json')
+  console.log(`${name} ${version}`)
+  process.exit(0)
+}
+
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
