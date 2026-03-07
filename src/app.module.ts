@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ScheduleModule } from '@nestjs/schedule'
 import { APP_GUARD } from '@nestjs/core'
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'
 
 import { RemindersModule } from './reminders/reminders.module'
 import { UsersModule } from './users/users.module'
@@ -16,6 +17,10 @@ import { PokeAuthGuard } from './auth/auth.guard'
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRoot({
+      ttl: 60,
+      limit: 30,
+    }),
     RemindersModule,
     UsersModule,
     MessageModule,
@@ -25,6 +30,10 @@ import { PokeAuthGuard } from './auth/auth.guard'
   ],
   controllers: [AppController],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: PokeAuthGuard,

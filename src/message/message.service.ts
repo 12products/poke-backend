@@ -101,11 +101,19 @@ export class MessageService {
       return
     }
 
-    for (const reminder of user.reminders) {
-      if (reminder.emoji === userResponse) {
-        this.remove({ reminderId: reminder.id })
-        pokeResponse = 'Great work!'
-        break
+    const normalizedResponse = userResponse.toLowerCase()
+    if (normalizedResponse === 'stop' || normalizedResponse === 'cancel') {
+      for (const reminder of user.reminders) {
+        await this.remove({ reminderId: reminder.id })
+      }
+      pokeResponse = "You've been unsubscribed from all reminders."
+    } else {
+      for (const reminder of user.reminders) {
+        if (userResponse.includes(reminder.emoji)) {
+          this.remove({ reminderId: reminder.id })
+          pokeResponse = 'Great work!'
+          break
+        }
       }
     }
 
